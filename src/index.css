@@ -1,3 +1,21 @@
+/*
+ * Archivo de estilos globales (index.css)
+ */
+:root {
+  --color-primario: #007bff;
+  --color-primario-hover: #0056b3;
+  --color-fondo: #f4f7f6;
+  --color-superficie: #ffffff;
+  --color-texto: #333;
+  --color-texto-secundario: #555;
+  --color-borde: #ddd;
+  --color-error: #d9534f;
+  --color-exito: #5cb85c;
+  --color-notificacion: #f0f8ff;
+  --sombra: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --radio-borde: 5px;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,11 +23,718 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f4f7f6;
-  color: #333;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+  box-sizing: border-box;
+}
+
+/* --- Estilos para Formularios (Login/Register) --- */
+.auth-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 2rem;
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  text-align: center;
+}
+
+.auth-container h2 {
+  color: var(--color-texto);
+  margin-top: 0;
+}
+
+.auth-form div {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+}
+
+button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--color-primario);
+  border: none;
+  border-radius: var(--radio-borde);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover,
+button:focus {
+  background-color: var(--color-primario-hover);
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  color: var(--color-error);
+  margin-bottom: 1rem;
+}
+
+.auth-link {
+  margin-top: 1.5rem;
+  color: var(--color-texto-secundario);
+}
+
+.auth-link a {
+  color: var(--color-primario);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* --- Estilos del Dashboard --- */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--color-superficie);
+  box-shadow: var(--sombra);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-primario);
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-header nav {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-main {
+  display: flex;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.dashboard-processes {
+  flex: 3;
+}
+
+.dashboard-sidebar {
+  flex: 1;
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem;
+  align-self: flex-start; 
+  max-height: calc(100vh - 100px); /* Altura máxima (100vh - header - padding) */
+  overflow-y: auto;
+}
+
+.dashboard-sidebar h3 {
+  margin-top: 0;
+  border-bottom: 2px solid var(--color-primario);
+  padding-bottom: 0.5rem;
+}
+
+.process-list-item {
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  transition: box-shadow 0.2s;
+}
+
+.process-list-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.process-list-item h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--color-primario);
+}
+
+.process-list-item p {
+  margin: 0.25rem 0;
+  color: var(--color-texto-secundario);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+  color: #fff;
+}
+
+.status-pendiente { background-color: #f0ad4e; }
+.status-en_revision { background-color: #0275d8; }
+.status-aprobado { background-color: #5cb85c; }
+.status-rechazado { background-color: #d9534f; }
+
+.notification-item {
+  background-color: var(--color-notificacion);
+  border: 1px solid #bce8f1;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radio-borde);
+}
+
+.notification-item p {
+  margin: 0;
+  font-weight: 600;
+  color: #31708f;
+}
+
+.notification-item small {
+  color: #666;
+  text-transform: capitalize;
+}
+
+/* --- Estilos del Modal --- */
+.modal {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem 2rem;
+  width: 90%;
+  max-width: 500px;
+}
+
+.modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-borde);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-header button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-texto-secundario);
+  cursor: pointer;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-form div {
+  margin-bottom: 1.25rem;
+}
+
+.modal-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.modal-form input,
+.modal-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  font-family: inherit;
+}
+
+.modal-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.modal-actions {
+  text-align: right;
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modal-actions button[type="button"] {
+  background-color: var(--color-texto-secundario);
+}
+
+/* --- Estilos para Link (Reset) --- */
+.link-style-reset {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* --- Estilos para ProcessDetailPage --- */
+.detail-page-main {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Tarjeta principal con detalles */
+.process-details-card {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem 2rem;
+}
+
+.process-details-card h1 {
+  margin-top: 0;
+  color: var(--color-primario);
+}
+
+.process-details-card p {
+  line-height: 1.6;
+}
+
+/* Acciones del Supervisor */
+.supervisor-actions {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-borde);
+}
+.supervisor-actions button {
+  margin-right: 1rem;
+}
+.button-success {
+  background-color: var(--color-exito);
+}
+.button-success:hover {
+  background-color: #449d44;
+}
+.button-danger {
+  background-color: var(--color-error);
+}
+.button-danger:hover {
+  background-color: #c9302c;
+}
+
+
+/* Columna de Incidencias */
+.incidents-column {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem 2rem;
+}
+
+/* Formulario del Revisor */
+.incident-form {
+  border-bottom: 1px solid var(--color-borde);
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.incident-form h3 {
+  margin-top: 0;
+}
+.incident-form div {
+  margin-bottom: 1rem;
+}
+.incident-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.incident-form textarea,
+.incident-form select,
+.incident-form input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  font-family: inherit;
+}
+.incident-form textarea {
+  min-height: 100px;
+}
+
+/* Lista de Incidencias */
+.incident-list h3 {
+  margin-top: 0;
+}
+.incident-item {
+  border: 1px solid var(--color-borde);
+  border-left: 5px solid var(--color-primario);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radio-borde);
+}
+.incident-item p {
+  margin: 0.25rem 0;
+}
+.incident-item small {
+  color: #888;
+}
+
+.severity-badge {
+  display: inline-block;
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  font-weight: 700;
+  border-radius: 0.25rem;
+  color: #fff;
+  text-transform: capitalize;
+  margin-right: 0.5rem;
+}
+.severity-baja { background-color: #5cb85c; }
+.severity-media { background-color: #f0ad4e; }
+.severity-critica { background-color: #d9534f; }
+
+/* --- Estilos para Evidencia --- */
+.evidence-display {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #eee;
+}
+.evidence-display strong {
+  font-size: 0.9em;
+  color: var(--color-texto-secundario);
+}
+.evidence-item p {
+  font-size: 0.9em;
+  margin: 0.25rem 0 0.25rem 1rem;
+}
+.evidence-item a {
+  color: var(--color-primario);
+  font-weight: 600;
+}
+
+/* --- Estilos para Botón de Volver --- */
+.back-button {
+  font-size: 1.5rem; /* Más grande */
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: none;
+  margin-right: 1rem;
+  transition: color 0.2s;
+  padding: 0 0.5rem;
+}
+.back-button:hover {
+  color: var(--color-primario-hover);
+}
+
+.header-title-static {
+  font-size: 1.5rem;
+  color: var(--color-texto);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* --- Estilos para Links del Header --- */
+.header-nav-link {
+  margin-right: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.header-nav-link:hover {
+  color: var(--color-primario-hover);
+  text-decoration: underline;
+}
+.header-nav-user {
+  margin-right: 1.5rem;
+  color: var(--color-texto-secundario);
+  font-weight: 500;
+}
+
+/* --- Estilos para la Página de Reportes --- */
+.reports-page-main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.stat-card {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem;
+  text-align: center;
+}
+.stat-card h3 {
+  font-size: 3rem;
+  color: var(--color-primario);
+  margin: 0;
+}
+.stat-card p {
+  font-size: 1.1rem;
+  color: var(--color-texto-secundario);
+  margin: 0.5rem 0 0 0;
+  font-weight: 600;
+}
+
+/* Columnas de reportes */
+.reports-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+.report-card {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem 2rem;
+}
+.report-card h3 {
+  margin-top: 0;
+  border-bottom: 2px solid var(--color-borde);
+  padding-bottom: 0.75rem;
+}
+.report-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.report-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.report-list li:last-child {
+  border-bottom: none;
+}
+.report-list li span {
+  font-weight: 600;
+}
+.report-list .severity-badge {
+  font-weight: 600;
+  margin-right: auto; /* Mueve el badge a la izquierda */
+  margin-left: 0.5rem;
+}
+.report-list li strong {
+  margin-right: 1rem; /* Separa el nombre de la cuenta */
+}
+
+
+/* --- Estilos para la Lista de Conversaciones --- */
+.conversation-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+.conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.conversation-header h3 {
+  margin: 0;
+  border-bottom: 2px solid var(--color-primario);
+  padding-bottom: 0.5rem;
+  flex-grow: 1;
+}
+.new-chat-button {
+  background-color: var(--color-primario);
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 28px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 1rem;
+}
+
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.conversation-item {
+  display: block;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-fondo);
+  border-radius: var(--radio-borde);
+  text-decoration: none;
+  color: var(--color-texto-secundario);
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+.conversation-item:hover {
+  background-color: #e9ecef;
+  color: var(--color-primario);
+}
+
+/* Modal de Lista de Contactos */
+.contact-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.contact-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-borde);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.contact-item:hover {
+  background-color: var(--color-notificacion);
+}
+.contact-item strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--color-texto);
+}
+.contact-item small {
+  color: var(--color-texto-secundario);
+}
+
+/* --- Estilos para Páginas de Chat (General y Privado) --- */
+.chat-page-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.chat-page-main {
+  flex-grow: 1;
+  padding: 1rem;
+  display: flex;
+  /* Altura = 100% de la ventana menos la altura del header (aprox 70px) */
+  height: calc(100vh - 70px); 
+}
+.chat-container.full-page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  height: 100%;
+  box-shadow: var(--sombra);
+  /* Agregado para que funcione en esta página */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  overflow: hidden;
+}
+
+
+/* --- Estilos para el Chat (General y Privado) --- */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 300px; /* Altura fija para el chat en el sidebar */
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  overflow: hidden;
+  background-color: var(--color-superficie);
+}
+
+.chat-messages {
+  flex-grow: 1;
+  padding: 1rem;
+  overflow-y: auto; /* Scroll para mensajes */
+  background-color: var(--color-fondo);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chat-placeholder {
+  text-align: center;
+  color: #999;
+  margin: auto;
+}
+
+.message-item {
+  padding: 0.5rem 0.75rem;
+  background-color: #e9ecef;
+  border-radius: var(--radio-borde);
+  max-width: 80%;
+  align-self: flex-start;
+  word-wrap: break-word;
+}
+
+.message-sender {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--color-primario);
+  margin-bottom: 0.25rem;
+}
+
+.message-content {
+  font-size: 0.95em;
+}
+
+/* Mi propio mensaje */
+.message-item.own {
+  align-self: flex-end;
+  background-color: var(--color-primario);
+  color: white;
+}
+
+.chat-form {
+  display: flex;
+  border-top: 1px solid var(--color-borde);
+}
+
+.chat-form input {
+  flex-grow: 1;
+  border: none;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  border-radius: 0 0 0 var(--radio-borde); /* Redondeo solo abajo-izquierda */
+}
+.chat-form input:focus {
+  outline: none;
+}
+
+.chat-form button {
+  font-size: 0.9rem;
+  border: none;
+  padding: 0 1rem;
+  border-radius: 0 0 var(--radio-borde) 0; /* Redondeo solo abajo-derecha */
 }
