@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
 import ProcessModal from '../components/ProcessModal';
-import ConversationSidebar from '../components/ConversationSidebar'; // El nuevo sidebar
+import ConversationSidebar from '../components/ConversationSidebar'; 
 
 // Un pequeño componente para el badge de estado
 const StatusBadge = ({ status }) => {
@@ -96,6 +96,7 @@ function DashboardPage() {
       <header className="dashboard-header">
         <h1>TCC - Plataforma de Auditoría</h1>
         <nav>
+          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
           {user?.role !== 'revisor' && (
             <Link to="/reports" className="header-nav-link">Reportes</Link>
           )}
@@ -156,7 +157,6 @@ function DashboardPage() {
           ))}
           <hr style={{margin: '2rem 0'}} />
           
-          {/* Aquí va la nueva lista de chats */}
           <ConversationSidebar />
           
         </aside>

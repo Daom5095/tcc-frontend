@@ -2,7 +2,6 @@
  * Página de Chat General (ChatGeneralPage.js)
  *
  * Esta es la página dedicada al chat público "general".
- * --- ¡VERSIÓN CORREGIDA PARA PEDIR EL HISTORIAL! ---
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -27,11 +26,9 @@ function ChatGeneralPage() {
   useEffect(() => {
     if (!socket) return; 
 
-    // --- ¡INICIO DE LA MEJORA! ---
     // 1. Apenas me monto, le pido el historial al backend
     console.log('ChatGeneralPage: Pidiendo historial de chat general...');
     socket.emit('chat:get_general_history'); // <-- Evento de pedir historial
-    // --- FIN DE LA MEJORA ---
 
     // 2. Escucho el historial de mensajes
     const handleHistory = (recentMessages) => {
@@ -43,9 +40,9 @@ function ChatGeneralPage() {
     // 3. Escucho cuando un nuevo mensaje es guardado (de cualquier usuario)
     const handleNewMessage = (savedMessage) => {
       console.log('ChatGeneralPage: Recibiendo nuevo mensaje');
-      // Añado el mensaje (ya no necesito verificar, este evento es solo para mí)
+      // Añado el mensaje
       setMessages((prevMessages) => {
-        // Evito duplicados (por si acaso)
+        // Evito duplicados
         if (prevMessages.find(msg => msg._id === savedMessage._id)) {
           return prevMessages;
         }
@@ -84,6 +81,7 @@ function ChatGeneralPage() {
           <span className="header-title-static">Chat General</span>
         </h1>
         <nav>
+          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
           {user?.role !== 'revisor' && (
             <Link to="/reports" className="header-nav-link">Reportes</Link>
           )}

@@ -2,7 +2,6 @@
  * Página de Chat Privado (PrivateChatPage.js)
  *
  * Esta página maneja una conversación 1-a-1.
- * --- ¡VERSIÓN CORREGIDA CON EVENTOS DE CHAT SEPARADOS! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -37,7 +36,7 @@ function PrivateChatPage() {
   const loadChatHistory = useCallback(async () => {
     if (!conversationId || conversationId === 'general') {
       setLoading(false);
-      return; // No hago nada si es la página de chat general
+      return; 
     }
     try {
       setLoading(true);
@@ -112,6 +111,7 @@ function PrivateChatPage() {
           <span className="header-title-static">Chat con {otherUser.name}</span>
         </h1>
         <nav>
+          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
           {user?.role !== 'revisor' && (
             <Link to="/reports" className="header-nav-link">Reportes</Link>
           )}

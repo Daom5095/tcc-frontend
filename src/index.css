@@ -738,3 +738,96 @@ button:disabled {
   padding: 0 1rem;
   border-radius: 0 0 var(--radio-borde) 0; /* Redondeo solo abajo-derecha */
 }
+
+/* --- Estilos para Links del Header --- */
+.header-nav-link {
+  margin-right: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.header-nav-link:hover {
+  color: var(--color-primario-hover);
+  text-decoration: underline;
+}
+.header-nav-user {
+  margin-right: 1.5rem;
+  color: var(--color-texto-secundario);
+  font-weight: 500;
+}
+
+/* --- Estilos para la Página de Reportes --- */
+.reports-page-main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.stat-card {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem;
+  text-align: center;
+}
+.stat-card h3 {
+  font-size: 3rem;
+  color: var(--color-primario);
+  margin: 0;
+}
+.stat-card p {
+  font-size: 1.1rem;
+  color: var(--color-texto-secundario);
+  margin: 0.5rem 0 0 0;
+  font-weight: 600;
+}
+
+/* Columnas de reportes */
+.reports-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+.report-card {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra);
+  padding: 1.5rem 2rem;
+}
+.report-card h3 {
+  margin-top: 0;
+  border-bottom: 2px solid var(--color-borde);
+  padding-bottom: 0.75rem;
+}
+.report-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.report-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.report-list li:last-child {
+  border-bottom: none;
+}
+.report-list li span {
+  font-weight: 600;
+}
+.report-list .severity-badge {
+  font-weight: 600;
+  margin-right: auto; /* Mueve el badge a la izquierda */
+  margin-left: 0.5rem;
+}
+.report-list li strong {
+  margin-right: 1rem; /* Separa el nombre de la cuenta */
+}

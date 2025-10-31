@@ -7,7 +7,8 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css'; // Mis estilos globales
+import './index.css'; 
+import 'antd/dist/reset.css';
 import App from './App'; // Mi componente principal de rutas
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; // Mi contexto de sesión

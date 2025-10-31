@@ -1,10 +1,8 @@
 /*
  * Página de Detalle de Proceso (ProcessDetailPage.js)
  *
- * Esta es la página donde ocurre la "magia".
- * - Carga los detalles de UN proceso y sus incidencias.
- * - Si eres Revisor, te muestra un formulario para añadir incidencias.
- * - Si eres Supervisor, te muestra botones para aprobar/rechazar.
+ * Muestra los detalles de una auditoría y permite
+ * al Revisor añadir incidencias y al Supervisor aprobar/rechazar.
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -172,6 +170,7 @@ function ProcessDetailPage() {
           <span className="header-title-static">TCC - Plataforma de Auditoría</span>
         </h1>
         <nav>
+          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
           {user?.role !== 'revisor' && (
             <Link to="/reports" className="header-nav-link">Reportes</Link>
           )}
