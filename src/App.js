@@ -1,8 +1,6 @@
 /*
  * Componente Principal de Rutas (App.js)
- *
- * Aquí defino la estructura de navegación de mi aplicación
- * usando React Router.
+ * --- ¡MODIFICADO CON RUTA DE ADMIN (FASE 3 - PASO 9)! ---
  */
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
@@ -15,7 +13,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ProcessDetailPage from './pages/ProcessDetailPage'; 
 import ChatGeneralPage from './pages/ChatGeneralPage';
 import PrivateChatPage from './pages/PrivateChatPage';
-import ReportsPage from './pages/ReportsPage'; // La página de reportes
+import ReportsPage from './pages/ReportsPage';
+import ProfilePage from './pages/ProfilePage';
+
+// --- NUEVAS IMPORTACIONES ---
+import AdminRoute from './components/AdminRoute'; // Importamos la ruta de Admin
+import AdminUsersPage from './pages/AdminUsersPage'; // Importamos la nueva página de admin
 
 function App() {
   return (
@@ -27,18 +30,21 @@ function App() {
 
         {/* --- RUTAS PRIVADAS (PROTEGIDAS) --- */}
         <Route path="/" element={<ProtectedRoute />}>
-          {/* Ruta principal al Dashboard */}
+          {/* Rutas para todos los roles logueados */}
           <Route path="/" element={<DashboardPage />} />
-          
-          {/* Ruta para el detalle de proceso */}
           <Route path="/process/:id" element={<ProcessDetailPage />} />
-          
-          {/* Rutas de Chat */}
           <Route path="/chat/general" element={<ChatGeneralPage />} />
           <Route path="/chat/:conversationId" element={<PrivateChatPage />} />
-          
-          {/* Ruta de Reportes */}
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          
+          {/* --- RUTAS SOLO PARA ADMIN --- */}
+          {/* Envolvemos las rutas de admin en el AdminRoute */}
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route path="users" element={<AdminUsersPage />} />
+            {/* Aquí podrías añadir más rutas de admin en el futuro,
+                como /admin/settings, etc. */}
+          </Route>
           
         </Route>
 

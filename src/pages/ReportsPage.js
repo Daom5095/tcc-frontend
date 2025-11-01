@@ -1,31 +1,50 @@
 /*
  * Página de Reportes (ReportsPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN LAYOUT! ---
+ * --- ¡MODIFICADA CON EXPORTACIÓN A CSV (FASE 3 - PASO 8)! ---
  */
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-// --- ¡CORRECCIÓN! AÑADIMOS LOS COMPONENTES QUE FALTABAN ---
+import AppHeader from '../components/AppHeader';
 import { 
-  Layout, Button, Space, Typography, Card, Tag, Spin, 
-  Alert, Empty, Row, Col, List, Divider 
+  Layout, Space, Typography, Card, Spin, 
+  Alert, Empty, Row, Col, Divider, Button // <-- NUEVO: Importar Button
 } from 'antd';
-import { BarChartOutlined } from '@ant-design/icons'; // Ícono para el título
+import { BarChartOutlined, DownloadOutlined } from '@ant-design/icons'; // <-- NUEVO: Importar DownloadOutlined
+import { Pie, Column } from '@ant-design/charts';
 
-const { Header, Content } = Layout;
+// --- NUEVO: Importar la librería de CSV ---
+import { CSVLink } from 'react-csv';
+
+const { Content } = Layout;
 const { Title, Text } = Typography;
 
+// --- NUEVO: Definir las cabeceras para los archivos CSV ---
+// Estas 'keys' deben coincidir con las que envía tu API de backend
+const severityHeaders = [
+  { label: "Severidad", key: "_id" },
+  { label: "Cantidad", key: "count" }
+];
+
+const revisorHeaders = [
+  { label: "Revisor", key: "revisorName" },
+  { label: "Email", key: "revisorEmail" },
+  { label: "Procesos Asignados", key: "count" }
+];
+// --- Fin de cabeceras ---
+
+
 function ReportsPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  
   const [report, setReport] = useState(null);
+  const [severityData, setSeverityData] = useState([]);
+  const [revisorData, setRevisorData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Al cargar la página, pido los datos a la API de reportes
   useEffect(() => {
     async function fetchReport() {
-      // Si el usuario es 'revisor', lo saco de aquí.
       if (user?.role === 'revisor') {
         setError('Acceso denegado. Esta página es solo para supervisores y administradores.');
         setLoading(false);
@@ -36,6 +55,21 @@ function ReportsPage() {
         setLoading(true);
         const { data } = await api.get('/api/reports/summary');
         setReport(data);
+
+        // Formatear datos para el gráfico de Severidad
+        const sevData = data.incidentSeverityCounts.map(item => ({
+          type: item._id.charAt(0).toUpperCase() + item._id.slice(1),
+          value: item.count,
+        }));
+        setSeverityData(sevData);
+
+        // Formatear datos para el gráfico de Carga de Trabajo
+        const revData = data.byRevisor.map(item => ({
+          name: item.revisorName,
+          value: item.count,
+        }));
+        setRevisorData(revData);
+
       } catch (err) {
         setError(err.response?.data?.message || 'Error al cargar el reporte');
       }
@@ -45,9 +79,9 @@ function ReportsPage() {
     if (user) {
       fetchReport();
     }
-  }, [user]); // Dependo de 'user' para saber si tengo permiso
+  }, [user]);
 
-  // Funciones para procesar los datos del reporte
+  // Funciones para procesar los datos (sin cambios)
   const getStatusCount = (status) => {
     return report?.statusCounts.find(s => s._id === status)?.count || 0;
   };
@@ -56,39 +90,86 @@ function ReportsPage() {
     return report?.statusCounts.reduce((acc, item) => acc + item.count, 0) || 0;
   };
 
+  // Configuraciones de gráficos (sin cambios)
+  const severityConfig = {
+    appendPadding: 10,
+    data: severityData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.8,
+    color: ({ type }) => {
+      if (type === 'Critica') return '#f5222d';
+      if (type === 'Media') return '#faad14';
+      if (type === 'Baja') return '#52c41a';
+      return '#d9d9d9';
+    },
+    label: {
+      type: 'inner',
+      offset: '-30%',
+      content: ({ percent }) => `${(percent * 100).toFixed(0)}%`,
+      style: { 
+        fontSize: 14, 
+        textAlign: 'center',
+        fill: '#fff'
+      },
+    },
+    interactions: [{ type: 'element-active' }],
+    legend: {
+      position: 'bottom',
+    },
+  };
+
+  const revisorConfig = {
+    data: revisorData,
+    xField: 'name',
+    yField: 'value',
+    xAxis: { label: { autoRotate: false } },
+    yAxis: { title: { text: 'N° de Procesos Asignados' } },
+    label: { position: 'top', style: { fill: '#555' } },
+    interactions: [{ type: 'element-active' }],
+  };
+
+  // --- NUEVO: Función para generar nombre de archivo ---
+  const getCsvFilename = (baseName) => {
+    const date = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    return `${baseName}_${date}.csv`;
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Encabezado de AntD */}
-      <Header className="app-header">
-        <Space>
-          <Link to="/" className="back-button-ant">
-            &larr;
-          </Link>
-          <div className="app-header-logo">
-             <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
-          </div>
-          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| Reportes de Auditoría</Text>
-        </Space>
-        <Space>
-          {user?.role !== 'revisor' && (
-            <Link to="/reports">
-              <Button type="text" style={{ color: '#007bff', fontWeight: '600' }}>Reportes</Button>
-            </Link>
-          )}
-          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-            Bienvenido, {user?.name} ({user?.role})
-          </Text>
-          <Button type="primary" danger onClick={logout}>
-            Cerrar Sesión
-          </Button>
-        </Space>
-      </Header>
+      <AppHeader title="Reportes de Auditoría" backLink="/" />
 
-      {/* Contenido de la página de reportes */}
       <Content className="app-content">
         <div className="reports-page-main">
-          <div className="content-header">
-             <Title level={2}><BarChartOutlined style={{marginRight: '12px'}} />Estado General de la Plataforma</Title>
+          {/* --- MODIFICADO: Añadidos botones de exportación --- */}
+          <div className="content-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <Title level={2} style={{ margin: 0 }}>
+               <BarChartOutlined style={{marginRight: '12px'}} />
+               Estado General de la Plataforma
+             </Title>
+             
+             {/* --- INICIO DE CÓDIGO NUEVO --- */}
+             <Space>
+                <CSVLink
+                  data={report?.incidentSeverityCounts || []}
+                  headers={severityHeaders}
+                  filename={getCsvFilename('reporte_severidad')}
+                >
+                  <Button icon={<DownloadOutlined />} disabled={!report || loading}>
+                    Exportar Severidad
+                  </Button>
+                </CSVLink>
+                <CSVLink
+                  data={report?.byRevisor || []}
+                  headers={revisorHeaders}
+                  filename={getCsvFilename('reporte_carga_revisores')}
+                >
+                  <Button icon={<DownloadOutlined />} disabled={!report || loading}>
+                    Exportar Carga
+                  </Button>
+                </CSVLink>
+             </Space>
+             {/* --- FIN DE CÓDIGO NUEVO --- */}
           </div>
           
           {loading && (
@@ -97,12 +178,11 @@ function ReportsPage() {
             </div>
           )}
           
-          {/* --- ¡CORREGIDO! <Alert> ahora está definido --- */}
           {error && <Alert message={error} type="error" showIcon />}
           
           {report && !loading && !error && (
             <>
-              {/* --- 1. Tarjetas de Estado de Procesos --- */}
+              {/* --- 1. Tarjetas de Estado (Sin cambios) --- */}
               <Title level={4}>Estado de Auditorías</Title>
               <Row gutter={[16, 16]} className="stats-grid">
                 <Col xs={24} sm={12} md={6}>
@@ -133,41 +213,26 @@ function ReportsPage() {
 
               <Divider />
 
-              {/* --- 2. Reporte de Incidencias --- */}
+              {/* --- 2. Reporte de Incidencias (Sin cambios) --- */}
               <Row gutter={[24, 24]} className="reports-columns">
                 <Col xs={24} md={12}>
                   <Card title="Incidencias por Severidad" className="report-card">
-                    <List
-                      dataSource={report.incidentSeverityCounts}
-                      locale={{ emptyText: <Empty description="No hay incidencias reportadas." /> }}
-                      renderItem={(item) => (
-                        <List.Item className="report-list-item">
-                          <Tag color={
-                            item._id === 'critica' ? 'error' :
-                            item._id === 'media' ? 'warning' : 'success'
-                          }>
-                            {item._id.toUpperCase()}
-                          </Tag>
-                          <Text strong>{item.count} Incidencia(s)</Text>
-                        </List.Item>
-                      )}
-                    />
+                    {severityData.length > 0 ? (
+                      <Pie {...severityConfig} height={300} />
+                    ) : (
+                      <Empty description="No hay incidencias reportadas." />
+                    )}
                   </Card>
                 </Col>
 
-                {/* --- 3. Reporte por Revisor --- */}
+                {/* --- 3. Reporte por Revisor (Sin cambios) --- */}
                 <Col xs={24} md={12}>
                   <Card title="Carga de Trabajo por Revisor" className="report-card">
-                    <List
-                      dataSource={report.byRevisor}
-                      locale={{ emptyText: <Empty description="No hay procesos asignados." /> }}
-                      renderItem={(item) => (
-                        <List.Item className="report-list-item">
-                          <Text>{item.revisorName}</Text>
-                          <Text strong>{item.count} Proceso(s)</Text>
-                        </List.Item>
-                      )}
-                    />
+                    {revisorData.length > 0 ? (
+                      <Column {...revisorConfig} height={300} />
+                    ) : (
+                       <Empty description="No hay procesos asignados." />
+                    )}
                   </Card>
                 </Col>
               </Row>

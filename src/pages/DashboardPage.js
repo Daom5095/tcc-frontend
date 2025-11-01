@@ -1,24 +1,29 @@
 /*
  * Página del Dashboard (DashboardPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN LAYOUT! ---
+ * --- ¡MODIFICADO PARA NOTIFICACIONES PERSISTENTES (FASE 2 - PASO 1)! ---
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // <-- NUEVO: Importar useNavigate
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
 import ProcessModal from '../components/ProcessModal';
 import ConversationSidebar from '../components/ConversationSidebar'; 
 
-// --- ¡CORRECCIÓN! Añado 'Alert' y quito 'Badge' ---
-import { Layout, Button, Space, Typography, Card, Tag, List, Avatar, Alert } from 'antd';
-// --- ¡CORRECCIÓN! Quito 'UserOutlined' ---
-import { PlusOutlined, BellOutlined } from '@ant-design/icons';
+// --- MODIFICADO: Añadimos Badge y Empty ---
+import { 
+  Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
+  Alert, Input, Select, Row, Col, Spin, Pagination, Badge, Empty // <-- Añadido Badge y Empty
+} from 'antd';
+import { PlusOutlined, BellOutlined, CheckCircleOutlined } from '@ant-design/icons'; // <-- Añadido CheckCircleOutlined
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
+const { Option } = Select;
 
-// Muevo el StatusBadge aquí para mantener el componente limpio
+const PAGE_SIZE = 9;
+
+// Componente de StatusBadge (sin cambios)
 const StatusBadge = ({ status }) => {
   let color;
   switch (status) {
@@ -42,32 +47,50 @@ const StatusBadge = ({ status }) => {
 
 function DashboardPage() {
   const { user, logout } = useAuth();
-  const { socket, notifications } = useSocket();
+  // --- MODIFICADO: Obtenemos las notificaciones y la nueva función del context ---
+  const { socket, notifications, markAllAsRead } = useSocket();
+  const navigate = useNavigate(); // <-- NUEVO: Para navegar al hacer clic en notif
 
   const [processes, setProcesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('todos');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProcesses, setTotalProcesses] = useState(0);
 
-  // Función para actualizar la lista de procesos
-  const fetchProcesses = useCallback(async () => {
+  // --- NUEVO: Contar notificaciones no leídas ---
+  const unreadCount = notifications.filter(notif => !notif.read).length;
+
+  // fetchProcesses (sin cambios desde el paso anterior)
+  const fetchProcesses = useCallback(async (page) => {
     try {
       setLoading(true);
       setError('');
-      const { data } = await api.get('/api/processes');
-      setProcesses(data);
+      const { data } = await api.get('/api/processes', {
+        params: {
+          search: searchTerm,
+          status: statusFilter,
+          page: page,
+          limit: PAGE_SIZE
+        }
+      });
+      setProcesses(data.processes);
+      setTotalProcesses(data.total);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cargar procesos');
     }
     setLoading(false);
-  }, []);
+  }, [searchTerm, statusFilter]);
 
-  // 1. Cargar procesos al inicio
+  // useEffect para cargar procesos (sin cambios)
   useEffect(() => {
-    fetchProcesses();
-  }, [fetchProcesses]);
+    fetchProcesses(currentPage);
+  }, [fetchProcesses, currentPage]);
 
-  // 2. Escuchar sockets para actualizaciones en tiempo real
+  // useEffect de Sockets (Lógica de refresco de procesos)
+  // --- MODIFICADO: Ya no maneja notificaciones aquí ---
   useEffect(() => {
     if (!socket) return;
 
@@ -80,10 +103,17 @@ function DashboardPage() {
     };
 
     const handleNewProcess = (newProcess) => {
-      if (user?.role !== 'revisor' && newProcess.createdBy._id === user?.id) {
-         setProcesses(prev => [newProcess, ...prev]);
-      } else if (user?.role === 'revisor' && newProcess.assignedTo._id === user?.id) {
-         setProcesses(prev => [newProcess, ...prev]);
+      // Esta lógica sigue siendo para refrescar la lista de procesos
+      if (currentPage === 1 && statusFilter === 'todos' && searchTerm === '') {
+        if (user?.role !== 'revisor' && newProcess.createdBy._id === user?.id) {
+           setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
+           setTotalProcesses(prev => prev + 1);
+        } else if (user?.role === 'revisor' && newProcess.assignedTo._id === user?.id) {
+           setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
+           setTotalProcesses(prev => prev + 1);
+        }
+      } else {
+        setTotalProcesses(prev => prev + 1);
       }
     };
     
@@ -95,8 +125,9 @@ function DashboardPage() {
        }
     };
 
+    // Solo escuchamos eventos que afectan a la lista de procesos
     socket.on('process:status_updated', handleProcessUpdate);
-    socket.on('process:assigned', handleNewProcess);
+    socket.on('process:assigned', handleNewProcess); // Este es el evento de 'proceso'
     socket.on('incident:created', handleIncidentCreated);
 
     return () => {
@@ -105,12 +136,38 @@ function DashboardPage() {
       socket.off('incident:created', handleIncidentCreated);
     };
 
-  }, [socket, user?.id, user?.role]);
+  }, [socket, user?.id, user?.role, currentPage, statusFilter, searchTerm]);
 
-  // Cuando el modal AntD tiene éxito, actualizamos
+  // (Funciones de handlers sin cambios)
   const handleProcessCreated = (newProcess) => {
-    setProcesses(prev => [newProcess, ...prev]);
-    setShowModal(false); // Cierro el modal
+    if (currentPage === 1 && statusFilter === 'todos' && searchTerm === '') {
+      setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
+    }
+    setTotalProcesses(prev => prev + 1);
+    setShowModal(false);
+  };
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // --- NUEVO: Handler para clic en notificación ---
+  const handleNotificationClick = (notification) => {
+    if (notification.link) {
+      navigate(notification.link);
+    }
+    // (Idealmente, aquí llamaríamos a una API para marcar esta *única* notif como leída)
+    // Por ahora, solo el "marcar todas" funciona
   };
 
   return (
@@ -126,6 +183,12 @@ function DashboardPage() {
               <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
             </Link>
           )}
+          {/* --- NUEVO: Badge de notificaciones en el header --- */}
+          <Badge count={unreadCount} size="small" style={{marginRight: '1rem'}}>
+             {/* Este ícono podría ir a una página /notificaciones en el futuro */}
+            <BellOutlined style={{ color: 'white', fontSize: '1.2rem', cursor: 'pointer' }} />
+          </Badge>
+
           <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
             Bienvenido, {user?.name} ({user?.role})
           </Text>
@@ -158,51 +221,140 @@ function DashboardPage() {
               <Title level={3} style={{color: 'var(--color-texto-secundario)', fontWeight: 400}}>Mis Auditorías Asignadas</Title>
             )}
 
-            {loading && <p>Cargando procesos...</p>}
+            {/* SECCIÓN DE FILTROS (sin cambios) */}
+            <Card style={{ marginBottom: '24px' }}>
+              <Row gutter={16}>
+                <Col xs={24} md={16}>
+                  <Input.Search
+                    placeholder="Buscar por título..."
+                    onSearch={handleSearch}
+                    onChange={(e) => {
+                      if (e.target.value === '') handleSearch('');
+                    }}
+                    enterButton
+                    size="large"
+                    loading={loading}
+                  />
+                </Col>
+                <Col xs={24} md={8}>
+                  <Select
+                    defaultValue="todos"
+                    style={{ width: '100%' }}
+                    onChange={handleStatusChange}
+                    size="large"
+                    value={statusFilter}
+                  >
+                    <Option value="todos">Todos los Estados</Option>
+                    <Option value="pendiente">Pendiente</Option>
+                    <Option value="en_revision">En Revisión</Option>
+                    <Option value="aprobado">Aprobado</Option>
+                    <Option value="rechazado">Rechazado</Option>
+                  </Select>
+                </Col>
+              </Row>
+            </Card>
             
-            {/* --- ¡CORREGIDO! Ahora <Alert> está definido --- */}
             {error && <Alert message={error} type="error" showIcon />}
             
-            {/* --- LISTA DE PROCESOS CON AntD Card --- */}
-            <div className="process-list-grid">
-              {processes.length === 0 && !loading && !error && (
-                <Text>No hay procesos para mostrar.</Text>
-              )}
-              {processes.map((process) => (
-                <Link to={`/process/${process._id}`} key={process._id} className="link-style-reset">
-                  <Card hoverable className="process-card">
-                    <StatusBadge status={process.status} />
-                    <Title level={4} style={{marginTop: '10px'}}>{process.title}</Title>
-                    {user?.role !== 'revisor' ? (
-                      <Text type="secondary">Asignado a: {process.assignedTo?.name || 'N/A'}</Text>
-                    ) : (
-                      <Text type="secondary">Creado por: {process.createdBy?.name || 'N/A'}</Text>
-                    )}
-                    <br/>
-                    <Text type="secondary" style={{fontSize: '0.8em'}}>
-                      Creado: {new Date(process.createdAt).toLocaleString()}
-                    </Text>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+            {/* LISTA DE PROCESOS (sin cambios) */}
+            {loading ? (
+              <div style={{textAlign: 'center', padding: '50px'}}>
+                <Spin size="large" />
+              </div>
+            ) : (
+              <div> 
+                <div className="process-list-grid">
+                  {processes.length === 0 && (
+                    <Typography.Text type="secondary" style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '1.1rem' }}>
+                      No se encontraron procesos que coincidan con tus filtros.
+                    </Typography.Text>
+                  )}
+                  {processes.map((process) => (
+                    <Link to={`/process/${process._id}`} key={process._id} className="link-style-reset">
+                      <Card 
+                        hoverable 
+                        extra={<StatusBadge status={process.status} />}
+                      >
+                        <Title level={4} style={{marginTop: '10px'}}>{process.title}</Title>
+                        {user?.role !== 'revisor' ? (
+                          <Text type="secondary">Asignado a: {process.assignedTo?.name || 'N/A'}</Text>
+                        ) : (
+                          <Text type="secondary">Creado por: {process.createdBy?.name || 'N/A'}</Text>
+                        )}
+                        <br/>
+                        <Text type="secondary" style={{fontSize: '0.8em'}}>
+                          Creado: {new Date(process.createdAt).toLocaleString()}
+                        </Text>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* PAGINACIÓN (sin cambios) */}
+                {totalProcesses > PAGE_SIZE && (
+                  <Pagination
+                    current={currentPage}
+                    total={totalProcesses}
+                    pageSize={PAGE_SIZE}
+                    onChange={handlePageChange}
+                    style={{ textAlign: 'center', marginTop: '24px' }}
+                    showSizeChanger={false}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </Content>
 
-        {/* --- SIDER DE AntD --- */}
+        {/* --- SIDER DE AntD (MODIFICADO) --- */}
         <Sider className="app-sider" width={350}>
           <div className="sider-section">
-            <Title level={4}><BellOutlined style={{marginRight: '8px'}} /> Notificaciones</Title>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <Title level={4} style={{ margin: 0 }}>
+                <Badge count={unreadCount}>
+                  <BellOutlined style={{marginRight: '8px'}} />
+                </Badge>
+                Notificaciones
+              </Title>
+              {/* --- NUEVO: Botón para marcar como leídas --- */}
+              {unreadCount > 0 && (
+                <Button 
+                  type="link" 
+                  size="small" 
+                  icon={<CheckCircleOutlined />}
+                  onClick={markAllAsRead}
+                >
+                  Marcar todas como leídas
+                </Button>
+              )}
+            </div>
             <List
               itemLayout="horizontal"
-              dataSource={notifications}
-              locale={{ emptyText: 'No hay notificaciones nuevas.' }}
-              renderItem={(notif, index) => (
-                <List.Item className="notification-item">
+              dataSource={notifications} // <-- Ahora viene del context con historial
+              locale={{ emptyText: <Empty description="No hay notificaciones." /> }}
+              renderItem={(notif) => (
+                // --- MODIFICADO: Añade clase si está leída y onClick ---
+                <List.Item 
+                  className={notif.read ? "notification-item notification-item-read" : "notification-item"}
+                  onClick={() => handleNotificationClick(notif)}
+                  style={{ cursor: notif.link ? 'pointer' : 'default' }}
+                >
                   <List.Item.Meta
-                    avatar={<Avatar icon={<BellOutlined />} style={{backgroundColor: '#e6f7ff', color: '#007bff'}} />}
-                    title={<Text strong>{notif.message}</Text>}
-                    description={notif.severity ? `Severidad: ${notif.severity}` : null}
+                    avatar={
+                      <Avatar 
+                        icon={<BellOutlined />} 
+                        style={{
+                          backgroundColor: notif.read ? '#f0f0f0' : '#e6f7ff', 
+                          color: notif.read ? '#aaa' : '#007bff'
+                        }} 
+                      />
+                    }
+                    title={<Text strong={!notif.read}>{notif.message}</Text>}
+                    description={
+                      <Text type="secondary">
+                        {new Date(notif.createdAt).toLocaleString()}
+                      </Text>
+                    }
                   />
                 </List.Item>
               )}
@@ -213,7 +365,7 @@ function DashboardPage() {
         </Sider>
       </Layout>
 
-      {/* --- MODAL DE AntD --- */}
+      {/* --- MODAL DE AntD (sin cambios) --- */}
       <ProcessModal 
         open={showModal} 
         onClose={() => setShowModal(false)}

@@ -1,6 +1,7 @@
 /*
  * Página de Detalle de Proceso (ProcessDetailPage.js)
  * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
+ * --- ¡MODIFICADA PARA SUBIDA DE ARCHIVOS (FASE 1 - PASO 1)! ---
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -11,11 +12,13 @@ import api from '../services/api';
 // --- ¡Nuevas importaciones de AntD! ---
 import { 
   Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
-  Form, Input, Select, Alert, Row, Col, Divider, Empty, Spin
+  Form, Input, Select, Alert, Row, Col, Divider, Empty, Spin,
+  Upload // <-- NUEVO: Importa el componente de subida
 } from 'antd';
 import { 
   CheckOutlined, CloseOutlined, SendOutlined, 
-  PaperClipOutlined, FileTextOutlined 
+  PaperClipOutlined, FileTextOutlined,
+  UploadOutlined // <-- NUEVO: Importa el ícono de subida
 } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
@@ -55,6 +58,9 @@ function ProcessDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- URL del Backend (para los enlaces de archivos) ---
+  const API_URL = 'http://localhost:4000'; // <-- NUEVO: Define la URL de tu backend
 
   // --- Función para cargar el detalle del proceso ---
   const fetchProcessDetails = useCallback(async () => {
@@ -119,31 +125,42 @@ function ProcessDetailPage() {
   }, [socket, processId, user?.role]);
 
   // --- Manejador para enviar el formulario de Incidencia ---
+  // <-- MODIFICADO: Ahora usa FormData para enviar archivos ---
   const handleIncidentSubmit = async (values) => {
     setIsSubmitting(true);
     
-    // Construimos el array de evidencia
-    const evidencePayload = [];
+    // 1. Crear un objeto FormData
+    const formData = new FormData();
+
+    // 2. Adjuntar todos los campos de texto
+    formData.append('description', values.description);
+    formData.append('severity', values.severity);
+
     if (values.evidenceText) {
-      evidencePayload.push({ type: 'texto', content: values.evidenceText });
+      formData.append('evidenceText', values.evidenceText);
     }
     if (values.evidenceLink) {
-      // Validación simple
+      // Validación (se mantiene por si acaso)
       if (!values.evidenceLink.startsWith('http://') && !values.evidenceLink.startsWith('https://')) {
         form.setFields([{ name: 'evidenceLink', errors: ['El enlace debe ser una URL válida (ej. http://...)'] }]);
         setIsSubmitting(false);
         return;
       }
-      evidencePayload.push({ type: 'enlace', content: values.evidenceLink });
+      formData.append('evidenceLink', values.evidenceLink);
     }
-    
-    try {
-      // Llamo a la API del backend para crear la incidencia
-      await api.post(`/api/processes/${processId}/incidents`, {
-        description: values.description,
-        severity: values.severity,
-        evidence: evidencePayload,
+
+    // 3. Adjuntar los archivos del <Upload>
+    if (values.evidenceFiles && values.evidenceFiles.length > 0) {
+      values.evidenceFiles.forEach(file => {
+        // 'evidenceFiles' debe coincidir con el nombre usado en multer (upload.array('evidenceFiles', 5))
+        formData.append('evidenceFiles', file.originFileObj);
       });
+    }
+
+    try {
+      // 4. Enviar FormData a la API. 
+      // Axios pondrá el 'Content-Type: multipart/form-data' automáticamente.
+      await api.post(`/api/processes/${processId}/incidents`, formData);
       
       form.resetFields(); // Limpio el formulario de AntD
       
@@ -265,7 +282,7 @@ function ProcessDetailPage() {
                     form={form}
                     layout="vertical"
                     name="incident_form"
-                    onFinish={handleIncidentSubmit}
+                    onFinish={handleIncidentSubmit} // <-- MODIFICADO: Ahora maneja FormData
                     initialValues={{ severity: 'media' }} // Valor por defecto
                   >
                     <Form.Item
@@ -302,6 +319,29 @@ function ProcessDetailPage() {
                     >
                       <Input prefix={<PaperClipOutlined />} placeholder="https://ejemplo.com/imagen.png" />
                     </Form.Item>
+
+                    {/* --- INICIO DE CÓDIGO NUEVO --- */}
+                    <Form.Item
+                      name="evidenceFiles"
+                      label="Adjuntar Archivos (Máx. 5)"
+                      // Esta prop es clave para que 'values.evidenceFiles' sea un array de archivos
+                      getValueFromEvent={(e) => {
+                        if (Array.isArray(e)) {
+                          return e;
+                        }
+                        return e && e.fileList;
+                      }}
+                    >
+                      <Upload
+                        multiple={true} // Permitir múltiples archivos
+                        beforeUpload={() => false} // Previene la subida automática
+                        listType="picture"
+                      >
+                        <Button icon={<UploadOutlined />}>Adjuntar Archivo(s)</Button>
+                      </Upload>
+                    </Form.Item>
+                    {/* --- FIN DE CÓDIGO NUEVO --- */}
+
                     <Form.Item>
                       <Button type="primary" htmlType="submit" loading={isSubmitting} icon={<SendOutlined />}>
                         {isSubmitting ? 'Enviando...' : 'Enviar Incidencia'}
@@ -353,6 +393,22 @@ function ProcessDetailPage() {
                                 </a>
                               </Tag>
                             )}
+                            
+                            {/* --- INICIO DE CÓDIGO NUEVO --- */}
+                            {ev.type === 'archivo' && (
+                              <Tag icon={<PaperClipOutlined />} color="blue">
+                                {/* Usamos la URL base del backend + la ruta del archivo */}
+                                <a 
+                                  href={`${API_URL}${ev.url}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                >
+                                  {ev.content} {/* Muestra el nombre del archivo */}
+                                </a>
+                              </Tag>
+                            )}
+                            {/* --- FIN DE CÓDIGO NUEVO --- */}
+
                           </div>
                         ))}
                       </div>

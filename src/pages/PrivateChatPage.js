@@ -1,6 +1,6 @@
 /*
  * Página de Chat Privado (PrivateChatPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
+ * --- ¡MODIFICADO CON "IS TYPING" (FASE 2 - PASO 2)! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -26,6 +26,12 @@ function PrivateChatPage() {
   const [conversationInfo, setConversationInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   
+  // --- NUEVO: Estados y Refs para "Escribiendo..." ---
+  const [typingMessage, setTypingMessage] = useState('');
+  const typingTimeoutRef = useRef(null);
+  const typingUsers = useRef(new Map()).current;
+  // --- Fin de nuevos estados ---
+
   const messagesEndRef = useRef(null);
 
   // Scroll automático
@@ -64,6 +70,18 @@ function PrivateChatPage() {
     loadChatHistory();
   }, [loadChatHistory]);
 
+  // --- NUEVO: Función para actualizar el mensaje de "escribiendo" ---
+  const updateTypingMessage = useCallback(() => {
+    const names = Array.from(typingUsers.values());
+    if (names.length === 0) {
+      setTypingMessage('');
+    } else if (names.length === 1) {
+      setTypingMessage(`${names[0]} está escribiendo...`);
+    } else {
+      setTypingMessage(`${names.join(', ')} están escribiendo...`);
+    }
+  }, [typingUsers]);
+
 
   // 2. Efecto para conectarse a la sala de Socket
   useEffect(() => {
@@ -74,17 +92,63 @@ function PrivateChatPage() {
 
     const handleMessageReceived = (savedMessage) => {
       if (savedMessage.conversationId === conversationId) {
+        // Cuando llega un mensaje, el usuario DEJA de escribir
+        typingUsers.delete(savedMessage.senderName);
+        updateTypingMessage();
+        
         setMessages((prevMessages) => [...prevMessages, savedMessage]);
       }
     };
     
     socket.on('chat:receive_private', handleMessageReceived);
 
+    // --- NUEVO: Listeners para "Escribiendo..." ---
+    const handleUserTyping = ({ name }) => {
+      if (name === user.name) return;
+      typingUsers.set(name, name);
+      updateTypingMessage();
+    };
+    
+    const handleUserStoppedTyping = ({ name }) => {
+      typingUsers.delete(name);
+      updateTypingMessage();
+    };
+
+    socket.on('chat:user_typing_private', handleUserTyping);
+    socket.on('chat:user_stopped_typing_private', handleUserStoppedTyping);
+    // --- Fin de nuevos listeners ---
+
     return () => {
       console.log(`Socket saliendo de la sala: ${conversationId}`);
       socket.off('chat:receive_private', handleMessageReceived);
+      socket.off('chat:user_typing_private', handleUserTyping); // <-- NUEVO
+      socket.off('chat:user_stopped_typing_private', handleUserStoppedTyping); // <-- NUEVO
     };
-  }, [socket, conversationId]);
+  }, [socket, conversationId, user.name, typingUsers, updateTypingMessage]); // <-- Dependencias actualizadas
+
+  // --- NUEVO: Función para manejar el evento "onChange" del input ---
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    if (!socket) return;
+
+    // Si no he enviado un evento "start" Y estoy escribiendo algo
+    if (!typingTimeoutRef.current && value.trim() !== '') {
+      socket.emit('chat:start_typing_private', { roomId: conversationId });
+    }
+
+    // Limpio el timeout anterior
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Creo un nuevo timeout. Si el usuario no escribe en 2s, emito "stop".
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('chat:stop_typing_private', { roomId: conversationId });
+      typingTimeoutRef.current = null; // Reseteo el ref
+    }, 2000);
+  };
 
   // Función para enviar un mensaje
   const handleSend = (value) => {
@@ -97,6 +161,14 @@ function PrivateChatPage() {
       content: content,
     });
     
+    // --- NUEVO: Al enviar, dejo de escribir ---
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = null;
+    socket.emit('chat:stop_typing_private', { roomId: conversationId });
+    // --- Fin ---
+
     setNewMessage(''); // Limpio el input
     setIsSending(false);
   };
@@ -105,7 +177,7 @@ function PrivateChatPage() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Encabezado de AntD */}
+      {/* Encabezado de AntD (sin cambios) */}
       <Header className="app-header">
         <Space>
           <Link to="/" className="back-button-ant">
@@ -163,6 +235,16 @@ function PrivateChatPage() {
           <div ref={messagesEndRef} />
         </Card>
         
+        {/* --- NUEVO: Indicador de "Escribiendo..." --- */}
+        <div className="typing-indicator-container">
+          {typingMessage && (
+            <Text type="secondary" className="typing-indicator">
+              {typingMessage}
+            </Text>
+          )}
+        </div>
+        {/* --- Fin de "Escribiendo..." --- */}
+
         {/* Formulario de envío (pegado al fondo) */}
         <div className="chat-input-container">
           <Search
@@ -170,7 +252,7 @@ function PrivateChatPage() {
             enterButton={<Button type="primary" icon={<SendOutlined />} />}
             size="large"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange} // <-- MODIFICADO
             onSearch={handleSend}
             loading={isSending}
             disabled={loading}

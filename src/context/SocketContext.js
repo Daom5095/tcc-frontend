@@ -1,16 +1,15 @@
 /*
  * Contexto de Sockets (SocketContext.js)
+ * --- ¡MODIFICADO PARA NOTIFICACIONES PERSISTENTES (FASE 2 - PASO 1)! ---
  *
  * Este proveedor maneja la conexión de Socket.io.
- * Depende de AuthContext, ya que SOLO debe conectarse si el
- * usuario está autenticado.
- *
- * También actúa como el "centro de notificaciones" de la app,
- * escuchando eventos del backend y almacenándolos en un estado.
+ * Ahora también carga el historial de notificaciones desde la API
+ * y provee una función para marcarlas como leídas.
  */
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext'; // Importamos el contexto de Auth
+import api from '../services/api'; // <-- NUEVO: Importamos API para fetching
 
 const SocketContext = createContext();
 
@@ -20,9 +19,23 @@ export const useSocket = () => {
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const [notifications, setNotifications] = useState([]); // Estado para notificaciones
-  
+  const [notifications, setNotifications] = useState([]); // Sigue siendo la fuente de verdad
   const { user } = useAuth(); // Obtenemos el usuario logueado desde AuthContext
+
+  // --- NUEVO: Función para marcar todas como leídas ---
+  const markAllAsRead = useCallback(async () => {
+    try {
+      // 1. Llama a la API del backend
+      await api.put('/api/notifications/read-all');
+      
+      // 2. Actualiza el estado localmente para que la UI reaccione
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, read: true }))
+      );
+    } catch (err) {
+      console.error("Error al marcar notificaciones como leídas:", err);
+    }
+  }, []); // Depende de 'api' (que es constante)
 
   useEffect(() => {
     // Solo nos conectamos si el usuario está logueado
@@ -38,37 +51,52 @@ export const SocketProvider = ({ children }) => {
       setSocket(newSocket);
       console.log('SocketContext: Conectando...');
 
-      // --- LISTENERS DE NOTIFICACIONES ---
-      newSocket.on('process:assigned', (notification) => {
-        console.log('¡Nuevo proceso asignado!', notification);
-        setNotifications(prev => [notification, ...prev]);
-      });
-      newSocket.on('incident:created', (notification) => {
-        console.log('¡Nueva incidencia reportada!', notification);
-        setNotifications(prev => [notification, ...prev]);
-      });
-      newSocket.on('process:status_updated', (notification) => {
-        console.log('¡Estado de proceso actualizado!', notification);
-        setNotifications(prev => [notification, ...prev]);
-      });
+      // --- NUEVO: Cargar notificaciones históricas ---
+      const fetchNotifications = async () => {
+        try {
+          const { data } = await api.get('/api/notifications');
+          setNotifications(data); // Carga el historial desde la BD
+        } catch (err) {
+          console.error("Error cargando historial de notificaciones:", err);
+        }
+      };
+      fetchNotifications();
+      // --- Fin de carga histórica ---
 
-      // Función de limpieza: Se ejecuta cuando el 'user' cambia (ej. logout)
+      // --- LISTENERS DE NOTIFICACIONES (Ahora añaden a la lista) ---
+      // Esta función genérica añade cualquier notificación nueva al inicio de la lista
+      const handleNewNotification = (notification) => {
+        console.log('¡Notificación recibida!', notification);
+        setNotifications(prev => [notification, ...prev]);
+      };
+
+      // Escuchamos los eventos que definimos en el backend
+      newSocket.on('process:assigned', handleNewNotification);
+      newSocket.on('incident:created', handleNewNotification);
+      newSocket.on('process:status_updated', handleNewNotification);
+      newSocket.on('chat:new_message_notification', handleNewNotification); // Para chats
+
+      // Función de limpieza
       return () => {
         console.log('SocketContext: Desconectando...');
         
-        // Limpiamos los listeners de notificación
-        newSocket.off('process:assigned');
-        newSocket.off('incident:created');
-        newSocket.off('process:status_updated');
+        newSocket.off('process:assigned', handleNewNotification);
+        newSocket.off('incident:created', handleNewNotification);
+        newSocket.off('process:status_updated', handleNewNotification);
+        newSocket.off('chat:new_message_notification', handleNewNotification);
         
         newSocket.disconnect();
       };
+    } else {
+      // Si el usuario hace logout, limpia el socket y las notificaciones
+      setSocket(null);
+      setNotifications([]);
     }
   }, [user]); // Este efecto se ejecuta cada vez que 'user' cambia (login/logout)
 
-  // Exponemos solo el socket y las notificaciones
+  // Exponemos el socket, las notificaciones Y la nueva función
   return (
-    <SocketContext.Provider value={{ socket, notifications }}>
+    <SocketContext.Provider value={{ socket, notifications, markAllAsRead }}>
       {children}
     </SocketContext.Provider>
   );
