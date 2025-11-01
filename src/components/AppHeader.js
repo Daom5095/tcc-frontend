@@ -1,12 +1,12 @@
 /*
  * Componente Reutilizable de Cabecera (AppHeader.js)
- * --- ¡MODIFICADO CON ENLACE A PANEL DE ADMIN (FASE 3 - PASO 9)! ---
+ * Creado para (FASE 2 - PASO 3)
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Layout, Button, Space, Typography, Dropdown, Menu, Avatar, Badge } from 'antd';
-// --- NUEVO: Importar ícono de Admin ---
+// --- MODIFICADO: 'Menu' eliminado de la importación ---
+import { Layout, Button, Space, Typography, Dropdown, Avatar, Badge } from 'antd'; 
 import { UserOutlined, BellOutlined, LogoutOutlined, ProfileOutlined, SettingOutlined } from '@ant-design/icons';
 import { useSocket } from '../context/SocketContext'; 
 
@@ -19,7 +19,6 @@ function AppHeader({ title, backLink }) {
 
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
-  // --- MODIFICADO: Añadimos items al menú dinámicamente ---
   const menuItems = [
     {
       key: 'profile',
@@ -32,7 +31,6 @@ function AppHeader({ title, backLink }) {
     },
   ];
 
-  // --- NUEVO: Añadir enlace de Admin solo si el rol es 'admin' ---
   if (user?.role === 'admin') {
     menuItems.push({
       key: 'admin',
@@ -44,9 +42,7 @@ function AppHeader({ title, backLink }) {
       ),
     });
   }
-  // --- Fin ---
 
-  // Añadir separador y logout
   menuItems.push({
     type: 'divider',
   });

@@ -8,7 +8,7 @@ import api from '../services/api';
 import AppHeader from '../components/AppHeader';
 import { 
   Layout, Typography, Table, Select, Switch, Tag, 
-  Spin, Alert, message // message es para popups de éxito/error
+  Spin, Alert, message, Space // <-- MODIFICADO: 'Space' ha sido añadido aquí
 } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
