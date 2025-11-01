@@ -1,8 +1,6 @@
 /*
  * Página del Dashboard (DashboardPage.js)
- *
- * Esta es la página principal de la aplicación.
- * Muestra el panel de procesos y la barra lateral de notificaciones/chat.
+ * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN LAYOUT! ---
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,10 +10,35 @@ import api from '../services/api';
 import ProcessModal from '../components/ProcessModal';
 import ConversationSidebar from '../components/ConversationSidebar'; 
 
-// Un pequeño componente para el badge de estado
+// --- ¡CORRECCIÓN! Añado 'Alert' y quito 'Badge' ---
+import { Layout, Button, Space, Typography, Card, Tag, List, Avatar, Alert } from 'antd';
+// --- ¡CORRECCIÓN! Quito 'UserOutlined' ---
+import { PlusOutlined, BellOutlined } from '@ant-design/icons';
+
+const { Header, Content, Sider } = Layout;
+const { Title, Text } = Typography;
+
+// Muevo el StatusBadge aquí para mantener el componente limpio
 const StatusBadge = ({ status }) => {
-  return <span className={`status-badge status-${status.replace('_', '-')}`}>{status}</span>;
-}
+  let color;
+  switch (status) {
+    case 'pendiente':
+      color = 'warning';
+      break;
+    case 'en_revision':
+      color = 'processing';
+      break;
+    case 'aprobado':
+      color = 'success';
+      break;
+    case 'rechazado':
+      color = 'error';
+      break;
+    default:
+      color = 'default';
+  }
+  return <Tag color={color}>{status.replace('_', ' ').toUpperCase()}</Tag>;
+};
 
 function DashboardPage() {
   const { user, logout } = useAuth();
@@ -49,7 +72,6 @@ function DashboardPage() {
     if (!socket) return;
 
     const handleProcessUpdate = (updatedProcess) => {
-      console.log('Socket recibió actualización de proceso:', updatedProcess);
       setProcesses(prevProcesses => 
         prevProcesses.map(p => 
           p._id === updatedProcess._id ? updatedProcess : p
@@ -58,7 +80,6 @@ function DashboardPage() {
     };
 
     const handleNewProcess = (newProcess) => {
-      console.log('Socket recibió nuevo proceso:', newProcess);
       if (user?.role !== 'revisor' && newProcess.createdBy._id === user?.id) {
          setProcesses(prev => [newProcess, ...prev]);
       } else if (user?.role === 'revisor' && newProcess.assignedTo._id === user?.id) {
@@ -67,7 +88,6 @@ function DashboardPage() {
     };
     
     const handleIncidentCreated = (data) => {
-       console.log('Socket recibió nuevo incidente:', data);
        if (user?.role !== 'revisor') {
          setProcesses(prev => prev.map(p => 
            p._id === data.processId ? { ...p, status: 'en_revision' } : p
@@ -87,88 +107,119 @@ function DashboardPage() {
 
   }, [socket, user?.id, user?.role]);
 
+  // Cuando el modal AntD tiene éxito, actualizamos
   const handleProcessCreated = (newProcess) => {
     setProcesses(prev => [newProcess, ...prev]);
+    setShowModal(false); // Cierro el modal
   };
 
   return (
-    <div>
-      <header className="dashboard-header">
-        <h1>TCC - Plataforma de Auditoría</h1>
-        <nav>
-          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
-          {user?.role !== 'revisor' && (
-            <Link to="/reports" className="header-nav-link">Reportes</Link>
-          )}
-          <span className="header-nav-user">
-            Bienvenido, {user?.name} ({user?.role})
-          </span>
-          <button onClick={logout}>Cerrar Sesión</button>
-        </nav>
-      </header>
-      
-      <main className="dashboard-main">
-        
-        <div className="dashboard-processes">
-          <h2>Panel de Procesos</h2>
-          {user?.role !== 'revisor' && (
-            <button onClick={() => setShowModal(true)} style={{ marginBottom: '15px' }}>
-              + Crear Nueva Auditoría
-            </button>
-          )}
-          {user?.role === 'revisor' && (
-            <h3>Mis Auditorías Asignadas</h3>
-          )}
-          {loading && <p>Cargando procesos...</p>}
-          {error && <p className="auth-error">{error}</p>}
-          <div className="process-list">
-            {processes.length === 0 && !loading && (
-              <p>No hay procesos para mostrar.</p>
-            )}
-            {processes.map((process) => (
-              <Link to={`/process/${process._id}`} key={process._id} className="link-style-reset">
-                <div className="process-list-item">
-                  <h4>{process.title}</h4>
-                  <p>Estado: <StatusBadge status={process.status} /></p>
-                  {user?.role !== 'revisor' ? (
-                    <p>Asignado a: {process.assignedTo?.name || 'N/A'}</p>
-                  ) : (
-                    <p>Creado por: {process.createdBy?.name || 'N/A'}</p>
-                  )}
-                  <p style={{fontSize: '0.8em', color: '#999'}}>Creado: {new Date(process.createdAt).toLocaleString()}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* --- HEADER DE AntD --- */}
+      <Header className="app-header">
+        <div className="app-header-logo">
+          <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
         </div>
-
-        <aside className="dashboard-sidebar">
-          <h3>Notificaciones</h3>
-          {notifications.length === 0 && (
-            <p>No hay notificaciones nuevas.</p>
+        <Space>
+          {user?.role !== 'revisor' && (
+            <Link to="/reports">
+              <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
+            </Link>
           )}
-          {notifications.map((notif, index) => (
-            <div key={index} className="notification-item">
-              <p>{notif.message}</p>
-              {notif.severity && (
-                <small>Severidad: {notif.severity}</small>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+            Bienvenido, {user?.name} ({user?.role})
+          </Text>
+          <Button type="primary" danger onClick={logout}>
+            Cerrar Sesión
+          </Button>
+        </Space>
+      </Header>
+      
+      {/* --- LAYOUT CON SIDER --- */}
+      <Layout>
+        <Content className="app-content">
+          <div className="dashboard-processes">
+            {/* Título y botón de crear */}
+            <div className="content-header">
+              <Title level={2}>Panel de Procesos</Title>
+              {user?.role !== 'revisor' && (
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />} 
+                  size="large"
+                  onClick={() => setShowModal(true)}
+                >
+                  Crear Nueva Auditoría
+                </Button>
               )}
             </div>
-          ))}
-          <hr style={{margin: '2rem 0'}} />
+            
+            {user?.role === 'revisor' && (
+              <Title level={3} style={{color: 'var(--color-texto-secundario)', fontWeight: 400}}>Mis Auditorías Asignadas</Title>
+            )}
+
+            {loading && <p>Cargando procesos...</p>}
+            
+            {/* --- ¡CORREGIDO! Ahora <Alert> está definido --- */}
+            {error && <Alert message={error} type="error" showIcon />}
+            
+            {/* --- LISTA DE PROCESOS CON AntD Card --- */}
+            <div className="process-list-grid">
+              {processes.length === 0 && !loading && !error && (
+                <Text>No hay procesos para mostrar.</Text>
+              )}
+              {processes.map((process) => (
+                <Link to={`/process/${process._id}`} key={process._id} className="link-style-reset">
+                  <Card hoverable className="process-card">
+                    <StatusBadge status={process.status} />
+                    <Title level={4} style={{marginTop: '10px'}}>{process.title}</Title>
+                    {user?.role !== 'revisor' ? (
+                      <Text type="secondary">Asignado a: {process.assignedTo?.name || 'N/A'}</Text>
+                    ) : (
+                      <Text type="secondary">Creado por: {process.createdBy?.name || 'N/A'}</Text>
+                    )}
+                    <br/>
+                    <Text type="secondary" style={{fontSize: '0.8em'}}>
+                      Creado: {new Date(process.createdAt).toLocaleString()}
+                    </Text>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </Content>
+
+        {/* --- SIDER DE AntD --- */}
+        <Sider className="app-sider" width={350}>
+          <div className="sider-section">
+            <Title level={4}><BellOutlined style={{marginRight: '8px'}} /> Notificaciones</Title>
+            <List
+              itemLayout="horizontal"
+              dataSource={notifications}
+              locale={{ emptyText: 'No hay notificaciones nuevas.' }}
+              renderItem={(notif, index) => (
+                <List.Item className="notification-item">
+                  <List.Item.Meta
+                    avatar={<Avatar icon={<BellOutlined />} style={{backgroundColor: '#e6f7ff', color: '#007bff'}} />}
+                    title={<Text strong>{notif.message}</Text>}
+                    description={notif.severity ? `Severidad: ${notif.severity}` : null}
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
           
           <ConversationSidebar />
-          
-        </aside>
-        
-      </main>
+        </Sider>
+      </Layout>
 
+      {/* --- MODAL DE AntD --- */}
       <ProcessModal 
-        show={showModal} 
+        open={showModal} 
         onClose={() => setShowModal(false)}
         onProcessCreated={handleProcessCreated}
       />
-    </div>
+    </Layout>
   );
 }
 

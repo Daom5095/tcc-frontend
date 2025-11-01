@@ -1,8 +1,6 @@
 /*
  * Página de Detalle de Proceso (ProcessDetailPage.js)
- *
- * Muestra los detalles de una auditoría y permite
- * al Revisor añadir incidencias y al Supervisor aprobar/rechazar.
+ * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -10,28 +8,52 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
 
+// --- ¡Nuevas importaciones de AntD! ---
+import { 
+  Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
+  Form, Input, Select, Alert, Row, Col, Divider, Empty, Spin
+} from 'antd';
+import { 
+  CheckOutlined, CloseOutlined, SendOutlined, 
+  PaperClipOutlined, FileTextOutlined 
+} from '@ant-design/icons';
+
+const { Header, Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
+const { Option } = Select;
+
 // Componente para el badge de estado
 const StatusBadge = ({ status }) => {
-  return <span className={`status-badge status-${status.replace('_', '-')}`}>{status}</span>;
-}
+  let color;
+  switch (status) {
+    case 'pendiente':
+      color = 'warning';
+      break;
+    case 'en_revision':
+      color = 'processing';
+      break;
+    case 'aprobado':
+      color = 'success';
+      break;
+    case 'rechazado':
+      color = 'error';
+      break;
+    default:
+      color = 'default';
+  }
+  return <Tag color={color}>{status.replace('_', ' ').toUpperCase()}</Tag>;
+};
 
 function ProcessDetailPage() {
   const { id: processId } = useParams(); // Obtengo el ID del proceso desde la URL
   const { user, logout } = useAuth(); // Obtengo mi rol, info Y la función logout
   const { socket } = useSocket(); // Obtengo el socket para escuchar
+  const [form] = Form.useForm(); // Hook de AntD para el formulario de incidencia
 
   const [process, setProcess] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // --- Estado para el formulario de incidencias (con evidencia) ---
-  const [description, setDescription] = useState('');
-  const [severity, setSeverity] = useState('media');
-  const [evidenceText, setEvidenceText] = useState(''); // Campo para evidencia de texto
-  const [evidenceLink, setEvidenceLink] = useState(''); // Campo para enlaces
-  
-  const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Función para cargar el detalle del proceso ---
@@ -97,47 +119,36 @@ function ProcessDetailPage() {
   }, [socket, processId, user?.role]);
 
   // --- Manejador para enviar el formulario de Incidencia ---
-  const handleIncidentSubmit = async (e) => {
-    e.preventDefault();
-    setFormError('');
+  const handleIncidentSubmit = async (values) => {
     setIsSubmitting(true);
     
-    if (description.length < 10) {
-      setFormError('La descripción debe tener al menos 10 caracteres.');
-      setIsSubmitting(false);
-      return;
-    }
-
     // Construimos el array de evidencia
     const evidencePayload = [];
-    if (evidenceText.trim()) {
-      evidencePayload.push({ type: 'texto', content: evidenceText });
+    if (values.evidenceText) {
+      evidencePayload.push({ type: 'texto', content: values.evidenceText });
     }
-    if (evidenceLink.trim()) {
-      if (!evidenceLink.startsWith('http://') && !evidenceLink.startsWith('https://')) {
-        setFormError('El enlace debe ser una URL válida (ej. http://...)');
+    if (values.evidenceLink) {
+      // Validación simple
+      if (!values.evidenceLink.startsWith('http://') && !values.evidenceLink.startsWith('https://')) {
+        form.setFields([{ name: 'evidenceLink', errors: ['El enlace debe ser una URL válida (ej. http://...)'] }]);
         setIsSubmitting(false);
         return;
       }
-      evidencePayload.push({ type: 'enlace', content: evidenceLink });
+      evidencePayload.push({ type: 'enlace', content: values.evidenceLink });
     }
     
     try {
       // Llamo a la API del backend para crear la incidencia
       await api.post(`/api/processes/${processId}/incidents`, {
-        description,
-        severity,
-        evidence: evidencePayload, // Enviamos la evidencia real
+        description: values.description,
+        severity: values.severity,
+        evidence: evidencePayload,
       });
       
-      // Limpio todo el formulario
-      setDescription('');
-      setSeverity('media');
-      setEvidenceText('');
-      setEvidenceLink('');
+      form.resetFields(); // Limpio el formulario de AntD
       
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Error al reportar incidencia');
+      form.setFields([{ name: 'description', errors: [err.response?.data?.message || 'Error al reportar'] }]);
     }
     setIsSubmitting(false);
   };
@@ -147,7 +158,6 @@ function ProcessDetailPage() {
     if (!window.confirm(`¿Estás seguro de que quieres ${newStatus} este proceso?`)) {
       return;
     }
-    
     try {
       await api.put(`/api/processes/${processId}/status`, { status: newStatus });
     } catch (err) {
@@ -156,157 +166,205 @@ function ProcessDetailPage() {
   };
 
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div className="auth-error" style={{padding: '2rem'}}>{error} <Link to="/">Volver</Link></div>;
-  if (!process) return <div>Proceso no encontrado.</div>;
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return <Alert message={error} type="error" showIcon style={{margin: '2rem'}} />;
+  }
+
+  if (!process) return <Empty description="Proceso no encontrado." style={{marginTop: '5rem'}} />;
 
   return (
-    <div>
-      <header className="dashboard-header">
-        <h1>
-          <Link to="/" className="back-button">
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* Encabezado de AntD */}
+      <Header className="app-header">
+        <Space>
+          <Link to="/" className="back-button-ant">
             &larr;
           </Link>
-          <span className="header-title-static">TCC - Plataforma de Auditoría</span>
-        </h1>
-        <nav>
-          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
+          <div className="app-header-logo">
+             <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
+          </div>
+          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| Detalle de Auditoría</Text>
+        </Space>
+        <Space>
           {user?.role !== 'revisor' && (
-            <Link to="/reports" className="header-nav-link">Reportes</Link>
+            <Link to="/reports">
+              <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
+            </Link>
           )}
-          <span className="header-nav-user">
+          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
             Bienvenido, {user?.name} ({user?.role})
-          </span>
-          <button onClick={logout}>Cerrar Sesión</button>
-        </nav>
-      </header>
+          </Text>
+          <Button type="primary" danger onClick={logout}>
+            Cerrar Sesión
+          </Button>
+        </Space>
+      </Header>
 
       {/* Contenido de la página de detalle */}
-      <main className="detail-page-main">
-        <div className="process-details-card">
-          <h1>{process.title}</h1>
-          <p><strong>Estado:</strong> <StatusBadge status={process.status} /></p>
-          <p><strong>Asignado a:</strong> {process.assignedTo.name} ({process.assignedTo.email})</p>
-          <p><strong>Creado por:</strong> {process.createdBy.name} ({process.createdBy.email})</p>
-          <p><strong>Descripción:</strong> {process.description || 'No hay descripción.'}</p>
+      <Content className="app-content-detail">
+        <Row gutter={[24, 24]}>
           
-          {/* --- ZONA DEL SUPERVISOR --- */}
-          {user?.role !== 'revisor' && process.status !== 'aprobado' && process.status !== 'rechazado' && (
-            <div className="supervisor-actions">
-              <h4>Acciones de Supervisor</h4>
-              <p>Revisar las incidencias y tomar una decisión.</p>
-              <button className="button-success" onClick={() => handleStatusUpdate('aprobado')}>
-                Aprobar Proceso
-              </button>
-              <button className="button-danger" onClick={() => handleStatusUpdate('rechazado')}>
-                Rechazar Proceso
-              </button>
-            </div>
-          )}
-        </div>
+          {/* --- Columna Izquierda: Detalles y Acciones --- */}
+          <Col xs={24} lg={12}>
+            <Card title="Detalles de la Auditoría" style={{boxShadow: 'var(--sombra)', borderRadius: 'var(--radio-borde)'}}>
+              <Title level={3}>{process.title}</Title>
+              <p><strong>Estado:</strong> <StatusBadge status={process.status} /></p>
+              <p><strong>Asignado a:</strong> {process.assignedTo.name} ({process.assignedTo.email})</p>
+              <p><strong>Creado por:</strong> {process.createdBy.name} ({process.createdBy.email})</p>
+              <Divider />
+              <Title level={5}>Descripción</Title>
+              <Paragraph>{process.description || 'No hay descripción.'}</Paragraph>
+              
+              {/* --- ZONA DEL SUPERVISOR --- */}
+              {user?.role !== 'revisor' && process.status !== 'aprobado' && process.status !== 'rechazado' && (
+                <div className="supervisor-actions-antd">
+                  <Divider />
+                  <Title level={4}>Acciones de Supervisor</Title>
+                  <Text type="secondary">Revisar las incidencias y tomar una decisión.</Text>
+                  <Space style={{marginTop: '1rem'}}>
+                    <Button 
+                      type="primary"
+                      className="button-success" 
+                      icon={<CheckOutlined />} 
+                      size="large"
+                      onClick={() => handleStatusUpdate('aprobado')}
+                    >
+                      Aprobar Proceso
+                    </Button>
+                    <Button 
+                      type="primary" 
+                      danger 
+                      icon={<CloseOutlined />} 
+                      size="large"
+                      onClick={() => handleStatusUpdate('rechazado')}
+                    >
+                      Rechazar Proceso
+                    </Button>
+                  </Space>
+                </div>
+              )}
+            </Card>
+          </Col>
 
-        {/* Columna de Incidencias */}
-        <div className="incidents-column">
-          {/* --- ZONA DEL REVISOR --- */}
-          {user?.role === 'revisor' && process.status !== 'aprobado' && process.status !== 'rechazado' && (
-            <form onSubmit={handleIncidentSubmit} className="incident-form">
-              <h3>Reportar Incidencia (Comentario)</h3>
-              <div>
-                <label htmlFor="severity">Severidad:</label>
-                <select 
-                  id="severity" 
-                  value={severity} 
-                  onChange={e => setSeverity(e.target.value)}
-                >
-                  <option value="baja">Baja</option>
-                  <option value="media">Media</option>
-                  <option value="critica">Crítica</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="description">Descripción:</label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Describe el hallazgo o comentario..."
-                  rows={4}
-                  required
-                />
-              </div>
+          {/* --- Columna Derecha: Incidencias --- */}
+          <Col xs={24} lg={12}>
+            <Card title="Gestión de Incidencias" style={{boxShadow: 'var(--sombra)', borderRadius: 'var(--radio-borde)'}}>
+              {/* --- ZONA DEL REVISOR --- */}
+              {user?.role === 'revisor' && process.status !== 'aprobado' && process.status !== 'rechazado' && (
+                <>
+                  <Title level={4}>Reportar Incidencia (Comentario)</Title>
+                  <Form
+                    form={form}
+                    layout="vertical"
+                    name="incident_form"
+                    onFinish={handleIncidentSubmit}
+                    initialValues={{ severity: 'media' }} // Valor por defecto
+                  >
+                    <Form.Item
+                      name="severity"
+                      label="Severidad"
+                      rules={[{ required: true, message: 'Por favor selecciona la severidad' }]}
+                    >
+                      <Select>
+                        <Option value="baja">Baja</Option>
+                        <Option value="media">Media</Option>
+                        <Option value="critica">Crítica</Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      name="description"
+                      label="Descripción"
+                      rules={[
+                        { required: true, message: 'La descripción es obligatoria' },
+                        { min: 10, message: 'Debe tener al menos 10 caracteres' }
+                      ]}
+                    >
+                      <Input.TextArea rows={4} placeholder="Describe el hallazgo o comentario..." />
+                    </Form.Item>
+                    <Form.Item
+                      name="evidenceText"
+                      label="Evidencia (Texto Opcional)"
+                    >
+                      <Input.TextArea rows={2} placeholder="Añade notas de texto..." />
+                    </Form.Item>
+                    <Form.Item
+                      name="evidenceLink"
+                      label="Enlace de Evidencia (Opcional)"
+                      rules={[{ type: 'url', message: 'Debe ser una URL válida (ej. http://...)' }]}
+                    >
+                      <Input prefix={<PaperClipOutlined />} placeholder="https://ejemplo.com/imagen.png" />
+                    </Form.Item>
+                    <Form.Item>
+                      <Button type="primary" htmlType="submit" loading={isSubmitting} icon={<SendOutlined />}>
+                        {isSubmitting ? 'Enviando...' : 'Enviar Incidencia'}
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                  <Divider />
+                </>
+              )}
 
-              {/* --- Campos de Evidencia --- */}
-              <div>
-                <label htmlFor="evidenceText">Evidencia (Texto Opcional):</label>
-                <textarea
-                  id="evidenceText"
-                  value={evidenceText}
-                  onChange={e => setEvidenceText(e.target.value)}
-                  placeholder="Añade notas de texto..."
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label htmlFor="evidenceLink">Enlace de Evidencia (Opcional):</label>
-                <input
-                  id="evidenceLink"
-                  type="text"
-                  value={evidenceLink}
-                  onChange={e => setEvidenceLink(e.target.value)}
-                  placeholder="https://ejemplo.com/imagen.png"
-                />
-              </div>
-
-              {formError && <p className="auth-error">{formError}</p>}
-              <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Enviando...' : 'Enviar Incidencia'}
-              </button>
-            </form>
-          )}
-
-          {/* --- LISTA DE INCIDENCIAS --- */}
-          <div className="incident-list">
-            <h3>Historial de Incidencias</h3>
-            {incidents.length === 0 && (
-              <p>No se han reportado incidencias para este proceso.</p>
-            )}
-            {incidents.map(incident => (
-              <div key={incident._id} className="incident-item">
-                <p><strong>{incident.description}</strong></p>
-                <p>
-                  <span className={`severity-badge severity-${incident.severity}`}>
-                    {incident.severity}
-                  </span>
-                  reportado por {incident.reportedBy.name}
-                </p>
-                
-                {/* Mostramos la evidencia guardada */}
-                {incident.evidence && incident.evidence.length > 0 && (
-                  <div className="evidence-display">
-                    <strong>Evidencia:</strong>
-                    {incident.evidence.map((ev, index) => (
-                      <div key={index} className="evidence-item">
-                        {ev.type === 'texto' && <p>&#8226; {ev.content}</p>}
-                        {ev.type === 'enlace' && (
-                          <p>
-                            &#8226; <a href={ev.content} target="_blank" rel="noopener noreferrer">
-                              Ver Enlace Adjunto
-                            </a>
-                          </p>
-                        )}
+              {/* --- LISTA DE INCIDENCIAS --- */}
+              <Title level={4} style={{marginTop: 0}}>Historial de Incidencias</Title>
+              <List
+                className="incident-list-antd"
+                itemLayout="horizontal"
+                dataSource={incidents}
+                locale={{ emptyText: <Empty description="No se han reportado incidencias." /> }}
+                renderItem={(incident) => (
+                  <List.Item>
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar 
+                          className={`severity-badge-avatar severity-${incident.severity}`}
+                        >
+                          {incident.severity.substring(0, 1).toUpperCase()}
+                        </Avatar>
+                      }
+                      title={<Text strong>{incident.description}</Text>}
+                      description={
+                        <>
+                          <Text>Reportado por: {incident.reportedBy.name}</Text>
+                          <br />
+                          <Text type="secondary">{new Date(incident.createdAt).toLocaleString()}</Text>
+                        </>
+                      }
+                    />
+                    {/* Mostramos la evidencia */}
+                    {incident.evidence && incident.evidence.length > 0 && (
+                      <div className="evidence-list">
+                        {incident.evidence.map((ev, index) => (
+                          <div key={index} className="evidence-list-item">
+                            {ev.type === 'texto' && (
+                              <Tag icon={<FileTextOutlined />}>Evidencia de Texto</Tag>
+                            )}
+                            {ev.type === 'enlace' && (
+                              <Tag icon={<PaperClipOutlined />}>
+                                <a href={ev.content} target="_blank" rel="noopener noreferrer">
+                                  Ver Enlace
+                                </a>
+                              </Tag>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </List.Item>
                 )}
-                
-                <small>{new Date(incident.createdAt).toLocaleString()}</small>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </main>
-    </div>
+              />
+            </Card>
+          </Col>
+        </Row>
+      </Content>
+    </Layout>
   );
 }
 

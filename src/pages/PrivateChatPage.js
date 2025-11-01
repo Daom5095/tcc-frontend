@@ -1,22 +1,29 @@
 /*
  * Página de Chat Privado (PrivateChatPage.js)
- *
- * Esta página maneja una conversación 1-a-1.
+ * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+// Importamos los nuevos componentes de AntD
+import { Layout, Button, Space, Typography, Card, List, Avatar, Input, Empty, Spin } from 'antd';
+import { SendOutlined } from '@ant-design/icons';
+
+const { Header, Content } = Layout;
+const { Title, Text } = Typography;
+const { Search } = Input;
 
 function PrivateChatPage() {
-  const { conversationId } = useParams(); // ID de la conversación desde la URL
+  const { conversationId } = useParams();
   const { socket } = useSocket();
   const { user, logout } = useAuth();
   
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [conversationInfo, setConversationInfo] = useState(null); // Para saber con quién hablo
+  const [isSending, setIsSending] = useState(false);
+  const [conversationInfo, setConversationInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   
   const messagesEndRef = useRef(null);
@@ -32,7 +39,7 @@ function PrivateChatPage() {
     return convo.participants.find(p => p._id !== user.id) || { name: 'Chat Privado' };
   };
 
-  // 1. Cargar el historial de mensajes al cargar la página
+  // 1. Cargar el historial de mensajes
   const loadChatHistory = useCallback(async () => {
     if (!conversationId || conversationId === 'general') {
       setLoading(false);
@@ -40,11 +47,9 @@ function PrivateChatPage() {
     }
     try {
       setLoading(true);
-      // Pido a la API el historial de este chat
       const { data } = await api.get(`/api/conversations/${conversationId}/messages`);
       setMessages(data);
       
-      // Pido la info de la conversación para saber el nombre
       const convoRes = await api.get(`/api/conversations`);
       const currentConvo = convoRes.data.find(c => c._id === conversationId);
       setConversationInfo(currentConvo);
@@ -64,99 +69,116 @@ function PrivateChatPage() {
   useEffect(() => {
     if (!socket || !conversationId || conversationId === 'general') return;
 
-    // 1. Me uno a la sala específica de este chat
     console.log(`Socket uniéndose a la sala: ${conversationId}`);
     socket.emit('join_room', conversationId);
 
-    // 2. Escucho por mensajes privados
     const handleMessageReceived = (savedMessage) => {
-      // Solo añado el mensaje si pertenece a esta conversación
       if (savedMessage.conversationId === conversationId) {
         setMessages((prevMessages) => [...prevMessages, savedMessage]);
       }
     };
     
-    socket.on('chat:receive_private', handleMessageReceived); // <-- Escucho el evento privado
+    socket.on('chat:receive_private', handleMessageReceived);
 
-    // 3. Limpieza: Dejo de escuchar
     return () => {
       console.log(`Socket saliendo de la sala: ${conversationId}`);
-      socket.off('chat:receive_private', handleMessageReceived); // <-- Limpio el evento privado
+      socket.off('chat:receive_private', handleMessageReceived);
     };
   }, [socket, conversationId]);
 
   // Función para enviar un mensaje
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !socket) return; 
+  const handleSend = (value) => {
+    const content = value.trim();
+    if (!content || !socket) return; 
 
-    // Emito un 'chat:send_private'
-    socket.emit('chat:send_private', { // <-- Evento de enviar privado
+    setIsSending(true);
+    socket.emit('chat:send_private', {
       roomId: conversationId,
-      content: newMessage,
+      content: content,
     });
     
-    setNewMessage('');
+    setNewMessage(''); // Limpio el input
+    setIsSending(false);
   };
   
   const otherUser = getOtherParticipant(conversationInfo);
 
   return (
-    <div className="chat-page-container">
-      <header className="dashboard-header">
-        <h1>
-          <Link to="/" className="back-button">
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* Encabezado de AntD */}
+      <Header className="app-header">
+        <Space>
+          <Link to="/" className="back-button-ant">
             &larr;
           </Link>
-          <span className="header-title-static">Chat con {otherUser.name}</span>
-        </h1>
-        <nav>
-          {/* --- ¡AÑADIDO! El enlace a Reportes --- */}
-          {user?.role !== 'revisor' && (
-            <Link to="/reports" className="header-nav-link">Reportes</Link>
-          )}
-          <span className="header-nav-user">
-            Bienvenido, {user?.name} ({user?.role})
-          </span>
-          <button onClick={logout}>Cerrar Sesión</button>
-        </nav>
-      </header>
-
-      <main className="chat-page-main">
-        <div className="chat-container full-page">
-          <div className="chat-messages">
-            {loading && <p className="chat-placeholder">Cargando mensajes...</p>}
-            {!loading && messages.length === 0 && (
-              <p className="chat-placeholder">Aún no hay mensajes.</p>
-            )}
-            
-            {messages.map((msg) => (
-              <div 
-                key={msg.id || msg._id} 
-                className={`message-item ${msg.senderId === user.id ? 'own' : ''}`}
-              >
-                {msg.senderId !== user.id && (
-                  <div className="message-sender">{msg.senderName}</div>
-                )}
-                <div className="message-content">{msg.content}</div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+          <div className="app-header-logo">
+             <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
           </div>
-          
-          <form onSubmit={handleSubmit} className="chat-form">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Escribe un mensaje..."
-              autoComplete="off"
+          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| Chat con {otherUser.name}</Text>
+        </Space>
+        <Space>
+          {user?.role !== 'revisor' && (
+            <Link to="/reports">
+              <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
+            </Link>
+          )}
+          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+            Bienvenido, {user?.name} ({user?.role})
+          </Text>
+          <Button type="primary" danger onClick={logout}>
+            Cerrar Sesión
+          </Button>
+        </Space>
+      </Header>
+      
+      {/* Contenido principal con el chat */}
+      <Content className="app-content-chat">
+        <Card className="chat-card-container">
+          {loading ? (
+            <div style={{textAlign: 'center', padding: '50px'}}>
+              <Spin size="large" />
+            </div>
+          ) : (
+            <List
+              className="chat-messages-list"
+              itemLayout="horizontal"
+              dataSource={messages}
+              locale={{ emptyText: <Empty description="Aún no hay mensajes." /> }}
+              renderItem={(msg) => (
+                <List.Item key={msg.id || msg._id} className={msg.senderId === user.id ? 'message-item own' : 'message-item'}>
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar style={{ backgroundColor: msg.senderId === user.id ? '#007bff' : '#f56a00' }}>
+                        {msg.senderName.substring(0, 1).toUpperCase()}
+                      </Avatar>
+                    }
+                    title={msg.senderId === user.id ? "Tú" : msg.senderName}
+                    description={msg.content}
+                  />
+                </List.Item>
+              )}
             />
-            <button type="submit">Enviar</button>
-          </form>
+          )}
+          {/* Div para forzar el scroll al final */}
+          <div ref={messagesEndRef} />
+        </Card>
+        
+        {/* Formulario de envío (pegado al fondo) */}
+        <div className="chat-input-container">
+          <Search
+            placeholder="Escribe un mensaje..."
+            enterButton={<Button type="primary" icon={<SendOutlined />} />}
+            size="large"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onSearch={handleSend}
+            loading={isSending}
+            disabled={loading}
+            autoComplete="off"
+          />
         </div>
-      </main>
-    </div>
+      </Content>
+    </Layout>
   );
 }
 

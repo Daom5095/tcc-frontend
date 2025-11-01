@@ -1,6 +1,6 @@
 /*
  * Página de Login (LoginPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
+ * 
  */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 // Importamos los componentes de AntD que usaremos
 import { Form, Input, Button, Card, Typography, Alert, Space } from 'antd';
 // Importamos los íconos
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
@@ -34,10 +34,19 @@ function LoginPage() {
 
   return (
     // Usamos 'Space' y 'Card' de AntD para centrar y estilizar
-    <Space direction="vertical" align="center" style={{ width: '100%', minHeight: '100vh', background: '#f0f2f5', paddingTop: '50px' }}>
-      <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-        <Title level={2} style={{ textAlign: 'center' }}>
-          Iniciar Sesión (TCC)
+    <Space direction="vertical" align="center" className="login-page-background">
+      
+      {/* Añadimos una clase a la Card para la animación */}
+      <Card className="login-card" style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        
+        {/* Ícono de auditoría/seguridad */}
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <SafetyCertificateOutlined style={{ fontSize: '48px', color: 'var(--color-primario)' }} />
+        </div>
+        
+        {/* --- ¡NOMBRE ACTUALIZADO! --- */}
+        <Title level={2} style={{ textAlign: 'center', marginTop: 0 }}>
+          Iniciar Sesión 
         </Title>
         
         {/* El formulario de AntD maneja el 'onSubmit' con onFinish */}
