@@ -9,13 +9,13 @@
 import axios from 'axios';
 
 // 1. URL base de mi backend
-const API_URL = 'http://localhost:4000'; // Asegúrate que este sea el puerto de tu backend
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';// Asegúrate que este sea el puerto de tu backend
 
 // 2. Creamos una instancia de Axios
 const api = axios.create({
   baseURL: API_URL,
 });
-
+  
 // 3. (MUY IMPORTANTE) Interceptor de Peticiones de Axios
 // Esto es "mágico": se ejecutará ANTES de CADA petición que hagamos con 'api'.
 // Su trabajo es tomar el token del localStorage y añadirlo a los encabezados.

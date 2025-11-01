@@ -41,8 +41,9 @@ export const SocketProvider = ({ children }) => {
     // Solo nos conectamos si el usuario está logueado
     if (user) {
       const token = localStorage.getItem('token');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
       
-      const newSocket = io('http://localhost:4000', { 
+      const newSocket = io(API_URL, {
         auth: {
           token: token
         }
