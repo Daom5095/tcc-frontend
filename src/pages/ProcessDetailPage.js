@@ -2,6 +2,7 @@
  * Página de Detalle de Proceso (ProcessDetailPage.js)
  * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
  * --- ¡MODIFICADA PARA SUBIDA DE ARCHIVOS (FASE 1 - PASO 1)! ---
+ * --- ¡CORREGIDO: Renombrada variable 'process' a 'processData' (FASE 3 - BUG FIX)! ---
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -53,13 +54,14 @@ function ProcessDetailPage() {
   const { socket } = useSocket(); // Obtengo el socket para escuchar
   const [form] = Form.useForm(); // Hook de AntD para el formulario de incidencia
 
-  const [process, setProcess] = useState(null);
+  // --- ¡CAMBIO CLAVE! Renombramos 'process' a 'processData' ---
+  const [processData, setProcessData] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- ¡CORRECCIÓN! Usamos la variable de entorno, igual que en api.js ---
+  // --- ¡CORRECCIÓN! Esta línea ahora funciona porque 'process' es la variable global ---
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
   // --- Función para cargar el detalle del proceso ---
@@ -68,7 +70,7 @@ function ProcessDetailPage() {
       setLoading(true);
       setError('');
       const { data } = await api.get(`/api/processes/${processId}`);
-      setProcess(data);
+      setProcessData(data); // <-- CAMBIO
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cargar el proceso');
     }
@@ -98,7 +100,7 @@ function ProcessDetailPage() {
     // Si el estado del proceso cambia (ej. Supervisor aprueba)
     const handleProcessUpdate = (updatedProcess) => {
       if (updatedProcess._id === processId) {
-        setProcess(updatedProcess); // Actualizo el estado en mi página
+        setProcessData(updatedProcess); // <-- CAMBIO
       }
     };
     
@@ -109,7 +111,7 @@ function ProcessDetailPage() {
         setIncidents(prev => [newIncident, ...prev]);
         // Si soy revisor, también actualizo el estado del proceso
         if (user?.role === 'revisor') {
-            setProcess(prev => ({ ...prev, status: 'en_revision' }));
+            setProcessData(prev => ({ ...prev, status: 'en_revision' })); // <-- CAMBIO
         }
       }
     };
@@ -125,7 +127,7 @@ function ProcessDetailPage() {
   }, [socket, processId, user?.role]);
 
   // --- Manejador para enviar el formulario de Incidencia ---
-  // <-- MODIFICADO: Ahora usa FormData para enviar archivos ---
+  // (Sin cambios en esta función)
   const handleIncidentSubmit = async (values) => {
     setIsSubmitting(true);
     
@@ -171,6 +173,7 @@ function ProcessDetailPage() {
   };
   
   // --- Manejador para Aprobar/Rechazar (Supervisor) ---
+  // (Sin cambios en esta función)
   const handleStatusUpdate = async (newStatus) => {
     if (!window.confirm(`¿Estás seguro de que quieres ${newStatus} este proceso?`)) {
       return;
@@ -195,7 +198,7 @@ function ProcessDetailPage() {
     return <Alert message={error} type="error" showIcon style={{margin: '2rem'}} />;
   }
 
-  if (!process) return <Empty description="Proceso no encontrado." style={{marginTop: '5rem'}} />;
+  if (!processData) return <Empty description="Proceso no encontrado." style={{marginTop: '5rem'}} />; // <-- CAMBIO
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -232,16 +235,16 @@ function ProcessDetailPage() {
           {/* --- Columna Izquierda: Detalles y Acciones --- */}
           <Col xs={24} lg={12}>
             <Card title="Detalles de la Auditoría" style={{boxShadow: 'var(--sombra)', borderRadius: 'var(--radio-borde)'}}>
-              <Title level={3}>{process.title}</Title>
-              <p><strong>Estado:</strong> <StatusBadge status={process.status} /></p>
-              <p><strong>Asignado a:</strong> {process.assignedTo.name} ({process.assignedTo.email})</p>
-              <p><strong>Creado por:</strong> {process.createdBy.name} ({process.createdBy.email})</p>
+              <Title level={3}>{processData.title}</Title>
+              <p><strong>Estado:</strong> <StatusBadge status={processData.status} /></p>
+              <p><strong>Asignado a:</strong> {processData.assignedTo.name} ({processData.assignedTo.email})</p>
+              <p><strong>Creado por:</strong> {processData.createdBy.name} ({processData.createdBy.email})</p>
               <Divider />
               <Title level={5}>Descripción</Title>
-              <Paragraph>{process.description || 'No hay descripción.'}</Paragraph>
+              <Paragraph>{processData.description || 'No hay descripción.'}</Paragraph>
               
               {/* --- ZONA DEL SUPERVISOR --- */}
-              {user?.role !== 'revisor' && process.status !== 'aprobado' && process.status !== 'rechazado' && (
+              {user?.role !== 'revisor' && processData.status !== 'aprobado' && processData.status !== 'rechazado' && (
                 <div className="supervisor-actions-antd">
                   <Divider />
                   <Title level={4}>Acciones de Supervisor</Title>
@@ -275,7 +278,7 @@ function ProcessDetailPage() {
           <Col xs={24} lg={12}>
             <Card title="Gestión de Incidencias" style={{boxShadow: 'var(--sombra)', borderRadius: 'var(--radio-borde)'}}>
               {/* --- ZONA DEL REVISOR --- */}
-              {user?.role === 'revisor' && process.status !== 'aprobado' && process.status !== 'rechazado' && (
+              {user?.role === 'revisor' && processData.status !== 'aprobado' && processData.status !== 'rechazado' && (
                 <>
                   <Title level={4}>Reportar Incidencia (Comentario)</Title>
                   <Form
