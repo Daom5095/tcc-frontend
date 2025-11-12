@@ -2,7 +2,7 @@
  * Página del Dashboard (DashboardPage.js)
  * --- ¡MODIFICADO CON SCROLL INDEPENDIENTE (BUG FIX)! ---
  * --- ¡MODIFICADO CON DELETE (BUG FIX)! ---
- * --- ¡CORREGIDA LA IMPORTACIÓN DE CloseOutlined (BUG FIX)! ---
+ * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,16 +14,16 @@ import ConversationSidebar from '../components/ConversationSidebar';
 import AppHeader from '../components/AppHeader'; 
 
 import { 
-  Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
+  Layout, Button, Typography, Card, Tag, List, Avatar, 
   Alert, Input, Select, Row, Col, Spin, Pagination, Badge, Empty
+  // --- ¡INICIO DE CAMBIO! ---
+  // 'Space' eliminado
+  // --- ¡FIN DE CAMBIO! ---
 } from 'antd';
-// --- ¡INICIO DE LA CORRECCIÓN! ---
 import { 
-  PlusOutlined, BellOutlined, CheckCircleOutlined, CloseOutlined // <-- ¡Añadido!
+  PlusOutlined, BellOutlined, CheckCircleOutlined, CloseOutlined
 } from '@ant-design/icons';
-// --- ¡FIN DE LA CORRECCIÓN! ---
 
-// Quitamos 'Header' de Layout, ya no lo usamos directamente
 const { Content, Sider } = Layout; 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -69,6 +69,7 @@ function DashboardPage() {
 
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
+  // (El resto del código no cambia...)
   const fetchProcesses = useCallback(async (page) => {
     try {
       setLoading(true);
