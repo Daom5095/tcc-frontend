@@ -1,26 +1,25 @@
 /*
  * Página de Chat General (ChatGeneralPage.js)
- * --- ¡MODIFICADO CON "IS TYPING" (FASE 2 - PASO 2)! ---
  * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
+ * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom'; // <-- CAMBIO: Ya no se usa aquí
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
+
 // --- ¡INICIO DE CAMBIO! ---
-import AppHeader from '../components/AppHeader'; // Importamos la cabecera correcta
-import { Layout, Button, Space, Typography, Card, List, Avatar, Input, Empty } from 'antd';
+import AppHeader from '../components/AppHeader'; 
+import { Layout, Button, Typography, Card, List, Avatar, Input, Empty } from 'antd'; // <-- 'Space' eliminado
 import { SendOutlined } from '@ant-design/icons';
 
-// Ya no importamos 'Header' de Layout
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Text } = Typography; // <-- 'Title' eliminado
 // --- ¡FIN DE CAMBIO! ---
-const { Search } = Input; // Componente de Input con botón integrado
+const { Search } = Input;
 
 function ChatGeneralPage() {
   const { socket } = useSocket();
-  // --- ¡CAMBIO! Ya no necesitamos 'logout' aquí ---
   const { user } = useAuth();
   
   const [messages, setMessages] = useState([]);
@@ -33,6 +32,7 @@ function ChatGeneralPage() {
 
   const messagesEndRef = useRef(null);
 
+  // (El resto del código no cambia...)
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -48,7 +48,6 @@ function ChatGeneralPage() {
     }
   }, [typingUsers]);
 
-  // (El resto de los hooks useEffect y los handlers no cambian...)
   useEffect(() => {
     if (!socket) return; 
 
@@ -139,12 +138,8 @@ function ChatGeneralPage() {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       
-      {/* --- ¡INICIO DE CAMBIO! --- */}
-      {/* Usamos el componente AppHeader reutilizable */}
       <AppHeader title="Chat General" backLink="/" />
-      {/* --- ¡FIN DE CAMBIO! --- */}
       
-      {/* Contenido principal con el chat */}
       <Content className="app-content-chat">
         <Card className="chat-card-container">
           <List
@@ -177,7 +172,6 @@ function ChatGeneralPage() {
           )}
         </div>
 
-        {/* Formulario de envío (pegado al fondo) */}
         <div className="chat-input-container">
           <Search
             placeholder="Escribe un mensaje..."

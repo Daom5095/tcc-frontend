@@ -1,33 +1,31 @@
 /*
  * Página de Reportes (ReportsPage.js)
  * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
+ * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom'; // <-- CAMBIO: Eliminado
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
-// --- ¡INICIO DE CAMBIO! ---
-import AppHeader from '../components/AppHeader'; // Importamos la cabecera correcta
+import AppHeader from '../components/AppHeader'; 
 import { 
-  Layout, Button, Space, Typography, Card, Tag, Spin, 
+  Layout, Typography, Card, Tag, Spin, 
   Alert, Empty, Row, Col, List, Divider 
+  // Button, Space, <-- CAMBIO: Eliminados
 } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
 
-// Ya no importamos 'Header' de Layout
 const { Content } = Layout;
 const { Title, Text } = Typography;
-// --- ¡FIN DE CAMBIO! ---
 
 function ReportsPage() {
-  // --- ¡CAMBIO! Ya no necesitamos 'logout' aquí ---
   const { user } = useAuth();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Al cargar la página, pido los datos a la API de reportes
+  // (El resto del código no cambia...)
   useEffect(() => {
     async function fetchReport() {
       if (user?.role === 'revisor') {
@@ -49,9 +47,8 @@ function ReportsPage() {
     if (user) {
       fetchReport();
     }
-  }, [user]); // Dependo de 'user' para saber si tengo permiso
+  }, [user]);
 
-  // Funciones para procesar los datos del reporte
   const getStatusCount = (status) => {
     if (!report) return 0;
     return report.statusCounts.find(s => s._id === status)?.count || 0;
@@ -65,12 +62,8 @@ function ReportsPage() {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       
-      {/* --- ¡INICIO DE CAMBIO! --- */}
-      {/* Usamos el componente AppHeader reutilizable */}
       <AppHeader title="Reportes de Auditoría" backLink="/" />
-      {/* --- ¡FIN DE CAMBIO! --- */}
 
-      {/* Contenido de la página de reportes */}
       <Content className="app-content">
         <div className="reports-page-main">
           <div className="content-header">
@@ -87,7 +80,6 @@ function ReportsPage() {
           
           {report && !loading && !error && (
             <>
-              {/* --- 1. Tarjetas de Estado de Procesos --- */}
               <Title level={4}>Estado de Auditorías</Title>
               <Row gutter={[16, 16]} className="stats-grid">
                 <Col xs={24} sm={12} md={6}>
@@ -118,7 +110,6 @@ function ReportsPage() {
 
               <Divider />
 
-              {/* --- 2. Reporte de Incidencias --- */}
               <Row gutter={[24, 24]} className="reports-columns">
                 <Col xs={24} md={12}>
                   <Card title="Incidencias por Severidad" className="report-card">
@@ -140,7 +131,6 @@ function ReportsPage() {
                   </Card>
                 </Col>
 
-                {/* --- 3. Reporte por Revisor --- */}
                 <Col xs={24} md={12}>
                   <Card title="Carga de Trabajo por Revisor" className="report-card">
                     <List

@@ -1,14 +1,17 @@
 /*
  * Página de Detalle de Proceso (ProcessDetailPage.js)
- * --- ¡MODIFICADO PARA QUITAR LÍMITE DE ARCHIVOS (MEJORA)! ---
+ * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
+ * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+// --- ¡INICIO DE CAMBIO! ---
+import { useParams } from 'react-router-dom'; // <-- 'Link' eliminado
+// --- ¡FIN DE CAMBIO! ---
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
-import AppHeader from '../components/AppHeader';
 
+import AppHeader from '../components/AppHeader'; 
 import { 
   Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
   Form, Input, Select, Alert, Row, Col, Divider, Empty, Spin,
@@ -60,7 +63,7 @@ function ProcessDetailPage() {
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
-  // (Las funciones de fetch, useEffect y handlers permanecen igual)
+  // (El resto del código no cambia...)
   const fetchProcessDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -270,10 +273,9 @@ function ProcessDetailPage() {
                       <Input prefix={<PaperClipOutlined />} placeholder="https://ejemplo.com/imagen.png" />
                     </Form.Item>
 
-                    {/* --- ¡INICIO DE CAMBIO! --- */}
                     <Form.Item
                       name="evidenceFiles"
-                      label="Adjuntar Archivos" // <-- Texto actualizado
+                      label="Adjuntar Archivos" 
                       getValueFromEvent={(e) => {
                         if (Array.isArray(e)) {
                           return e;
@@ -289,7 +291,6 @@ function ProcessDetailPage() {
                         <Button icon={<UploadOutlined />}>Adjuntar Archivo(s)</Button>
                       </Upload>
                     </Form.Item>
-                    {/* --- ¡FIN DE CAMBIO! --- */}
 
                     <Form.Item>
                       <Button type="primary" htmlType="submit" loading={isSubmitting} icon={<SendOutlined />}>
@@ -301,7 +302,6 @@ function ProcessDetailPage() {
                 </>
               )}
 
-              {/* --- LISTA DE INCIDENCIAS --- */}
               <Title level={4} style={{marginTop: 0}}>Historial de Incidencias</Title>
               <List
                 className="incident-list-antd"

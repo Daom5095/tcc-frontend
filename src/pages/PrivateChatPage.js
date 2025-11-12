@@ -1,28 +1,28 @@
 /*
  * Página de Chat Privado (PrivateChatPage.js)
- * --- ¡MODIFICADO CON "IS TYPING" (FASE 2 - PASO 2)! ---
  * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
+ * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+// import { useParams, Link } from 'react-router-dom'; // <-- CAMBIO: Link no se usa
+import { useParams } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+
 // --- ¡INICIO DE CAMBIO! ---
-import AppHeader from '../components/AppHeader'; // Importamos la cabecera correcta
-import { Layout, Button, Space, Typography, Card, List, Avatar, Input, Empty, Spin } from 'antd';
+import AppHeader from '../components/AppHeader';
+import { Layout, Button, Typography, Card, List, Avatar, Input, Empty, Spin } from 'antd'; // <-- 'Space' eliminado
 import { SendOutlined } from '@ant-design/icons';
 
-// Ya no importamos 'Header' de Layout
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Text } = Typography; // <-- 'Title' eliminado
 // --- ¡FIN DE CAMBIO! ---
 const { Search } = Input;
 
 function PrivateChatPage() {
   const { conversationId } = useParams();
   const { socket } = useSocket();
-  // --- ¡CAMBIO! Ya no necesitamos 'logout' aquí ---
   const { user } = useAuth();
   
   const [messages, setMessages] = useState([]);
@@ -37,18 +37,16 @@ function PrivateChatPage() {
 
   const messagesEndRef = useRef(null);
 
+  // (El resto del código no cambia...)
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
-  // Función para obtener el nombre del "otro" usuario en el chat
   const getOtherParticipant = (convo) => {
     if (!convo || !user) return { name: 'Chat' };
-    // Usamos la corrección de 'user.id' y 'user._id' que hicimos antes
     return convo.participants.find(p => p._id !== (user.id || user._id)) || { name: 'Chat Privado' };
   };
 
-  // (El resto de los hooks useEffect y los handlers no cambian...)
   const loadChatHistory = useCallback(async () => {
     if (!conversationId || conversationId === 'general') {
       setLoading(false);
@@ -169,12 +167,8 @@ function PrivateChatPage() {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       
-      {/* --- ¡INICIO DE CAMBIO! --- */}
-      {/* Usamos el componente AppHeader reutilizable */}
       <AppHeader title={`Chat con ${otherUser.name}`} backLink="/" />
-      {/* --- ¡FIN DE CAMBIO! --- */}
       
-      {/* Contenido principal con el chat */}
       <Content className="app-content-chat">
         <Card className="chat-card-container">
           {loading ? (
@@ -213,7 +207,6 @@ function PrivateChatPage() {
           )}
         </div>
 
-        {/* Formulario de envío (pegado al fondo) */}
         <div className="chat-input-container">
           <Search
             placeholder="Escribe un mensaje..."
