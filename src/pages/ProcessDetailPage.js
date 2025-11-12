@@ -1,32 +1,30 @@
 /*
  * Página de Detalle de Proceso (ProcessDetailPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
- * --- ¡MODIFICADA PARA SUBIDA DE ARCHIVOS (FASE 1 - PASO 1)! ---
- * --- ¡CORREGIDO: Renombrada variable 'process' a 'processData' (FASE 3 - BUG FIX)! ---
+ * --- ¡MODIFICADO PARA QUITAR LÍMITE DE ARCHIVOS (MEJORA)! ---
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
+import AppHeader from '../components/AppHeader';
 
-// --- ¡Nuevas importaciones de AntD! ---
 import { 
   Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
   Form, Input, Select, Alert, Row, Col, Divider, Empty, Spin,
-  Upload // <-- NUEVO: Importa el componente de subida
+  Upload
 } from 'antd';
 import { 
   CheckOutlined, CloseOutlined, SendOutlined, 
   PaperClipOutlined, FileTextOutlined,
-  UploadOutlined // <-- NUEVO: Importa el ícono de subida
+  UploadOutlined
 } from '@ant-design/icons';
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
-// Componente para el badge de estado
+// (El componente StatusBadge no cambia)
 const StatusBadge = ({ status }) => {
   let color;
   switch (status) {
@@ -49,35 +47,32 @@ const StatusBadge = ({ status }) => {
 };
 
 function ProcessDetailPage() {
-  const { id: processId } = useParams(); // Obtengo el ID del proceso desde la URL
-  const { user, logout } = useAuth(); // Obtengo mi rol, info Y la función logout
-  const { socket } = useSocket(); // Obtengo el socket para escuchar
-  const [form] = Form.useForm(); // Hook de AntD para el formulario de incidencia
+  const { id: processId } = useParams();
+  const { user } = useAuth(); 
+  const { socket } = useSocket(); 
+  const [form] = Form.useForm(); 
 
-  // --- ¡CAMBIO CLAVE! Renombramos 'process' a 'processData' ---
   const [processData, setProcessData] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- ¡CORRECCIÓN! Esta línea ahora funciona porque 'process' es la variable global ---
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
-  // --- Función para cargar el detalle del proceso ---
+  // (Las funciones de fetch, useEffect y handlers permanecen igual)
   const fetchProcessDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       const { data } = await api.get(`/api/processes/${processId}`);
-      setProcessData(data); // <-- CAMBIO
+      setProcessData(data);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cargar el proceso');
     }
     setLoading(false);
   }, [processId]);
 
-  // --- Función para cargar las incidencias ---
   const fetchIncidents = useCallback(async () => {
     try {
       const { data } = await api.get(`/api/processes/${processId}/incidents`);
@@ -87,31 +82,25 @@ function ProcessDetailPage() {
     }
   }, [processId]);
 
-  // --- Carga de datos inicial ---
   useEffect(() => {
     fetchProcessDetails();
     fetchIncidents();
   }, [fetchProcessDetails, fetchIncidents]);
   
-  // --- Escuchar Sockets para updates en ESTA página ---
   useEffect(() => {
     if (!socket) return;
     
-    // Si el estado del proceso cambia (ej. Supervisor aprueba)
     const handleProcessUpdate = (updatedProcess) => {
       if (updatedProcess._id === processId) {
-        setProcessData(updatedProcess); // <-- CAMBIO
+        setProcessData(updatedProcess); 
       }
     };
     
-    // Si se crea una nueva incidencia
     const handleIncidentCreated = (newIncident) => {
       if (newIncident.processId === processId) {
-        // La añado a la lista de incidencias en tiempo real
         setIncidents(prev => [newIncident, ...prev]);
-        // Si soy revisor, también actualizo el estado del proceso
         if (user?.role === 'revisor') {
-            setProcessData(prev => ({ ...prev, status: 'en_revision' })); // <-- CAMBIO
+            setProcessData(prev => ({ ...prev, status: 'en_revision' }));
         }
       }
     };
@@ -126,15 +115,10 @@ function ProcessDetailPage() {
 
   }, [socket, processId, user?.role]);
 
-  // --- Manejador para enviar el formulario de Incidencia ---
-  // (Sin cambios en esta función)
   const handleIncidentSubmit = async (values) => {
     setIsSubmitting(true);
     
-    // 1. Crear un objeto FormData
     const formData = new FormData();
-
-    // 2. Adjuntar todos los campos de texto
     formData.append('description', values.description);
     formData.append('severity', values.severity);
 
@@ -142,7 +126,6 @@ function ProcessDetailPage() {
       formData.append('evidenceText', values.evidenceText);
     }
     if (values.evidenceLink) {
-      // Validación (se mantiene por si acaso)
       if (!values.evidenceLink.startsWith('http://') && !values.evidenceLink.startsWith('https://')) {
         form.setFields([{ name: 'evidenceLink', errors: ['El enlace debe ser una URL válida (ej. http://...)'] }]);
         setIsSubmitting(false);
@@ -151,29 +134,21 @@ function ProcessDetailPage() {
       formData.append('evidenceLink', values.evidenceLink);
     }
 
-    // 3. Adjuntar los archivos del <Upload>
     if (values.evidenceFiles && values.evidenceFiles.length > 0) {
       values.evidenceFiles.forEach(file => {
-        // 'evidenceFiles' debe coincidir con el nombre usado en multer (upload.array('evidenceFiles', 5))
         formData.append('evidenceFiles', file.originFileObj);
       });
     }
 
     try {
-      // 4. Enviar FormData a la API. 
-      // Axios pondrá el 'Content-Type: multipart/form-data' automáticamente.
       await api.post(`/api/processes/${processId}/incidents`, formData);
-      
-      form.resetFields(); // Limpio el formulario de AntD
-      
+      form.resetFields();
     } catch (err) {
       form.setFields([{ name: 'description', errors: [err.response?.data?.message || 'Error al reportar'] }]);
     }
     setIsSubmitting(false);
   };
   
-  // --- Manejador para Aprobar/Rechazar (Supervisor) ---
-  // (Sin cambios en esta función)
   const handleStatusUpdate = async (newStatus) => {
     if (!window.confirm(`¿Estás seguro de que quieres ${newStatus} este proceso?`)) {
       return;
@@ -198,41 +173,16 @@ function ProcessDetailPage() {
     return <Alert message={error} type="error" showIcon style={{margin: '2rem'}} />;
   }
 
-  if (!processData) return <Empty description="Proceso no encontrado." style={{marginTop: '5rem'}} />; // <-- CAMBIO
+  if (!processData) return <Empty description="Proceso no encontrado." style={{marginTop: '5rem'}} />;
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Encabezado de AntD */}
-      <Header className="app-header">
-        <Space>
-          <Link to="/" className="back-button-ant">
-            &larr;
-          </Link>
-          <div className="app-header-logo">
-             <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
-          </div>
-          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| Detalle de Auditoría</Text>
-        </Space>
-        <Space>
-          {user?.role !== 'revisor' && (
-            <Link to="/reports">
-              <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
-            </Link>
-          )}
-          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-            Bienvenido, {user?.name} ({user?.role})
-          </Text>
-          <Button type="primary" danger onClick={logout}>
-            Cerrar Sesión
-          </Button>
-        </Space>
-      </Header>
+      
+      <AppHeader title="Detalle de Auditoría" backLink="/" />
 
-      {/* Contenido de la página de detalle */}
       <Content className="app-content-detail">
         <Row gutter={[24, 24]}>
           
-          {/* --- Columna Izquierda: Detalles y Acciones --- */}
           <Col xs={24} lg={12}>
             <Card title="Detalles de la Auditoría" style={{boxShadow: 'var(--sombra)', borderRadius: 'var(--radio-borde)'}}>
               <Title level={3}>{processData.title}</Title>
@@ -243,7 +193,6 @@ function ProcessDetailPage() {
               <Title level={5}>Descripción</Title>
               <Paragraph>{processData.description || 'No hay descripción.'}</Paragraph>
               
-              {/* --- ZONA DEL SUPERVISOR --- */}
               {user?.role !== 'revisor' && processData.status !== 'aprobado' && processData.status !== 'rechazado' && (
                 <div className="supervisor-actions-antd">
                   <Divider />
@@ -274,10 +223,8 @@ function ProcessDetailPage() {
             </Card>
           </Col>
 
-          {/* --- Columna Derecha: Incidencias --- */}
           <Col xs={24} lg={12}>
             <Card title="Gestión de Incidencias" style={{boxShadow: 'var(--sombra)', borderRadius: 'var(--radio-borde)'}}>
-              {/* --- ZONA DEL REVISOR --- */}
               {user?.role === 'revisor' && processData.status !== 'aprobado' && processData.status !== 'rechazado' && (
                 <>
                   <Title level={4}>Reportar Incidencia (Comentario)</Title>
@@ -285,8 +232,8 @@ function ProcessDetailPage() {
                     form={form}
                     layout="vertical"
                     name="incident_form"
-                    onFinish={handleIncidentSubmit} // <-- MODIFICADO: Ahora maneja FormData
-                    initialValues={{ severity: 'media' }} // Valor por defecto
+                    onFinish={handleIncidentSubmit}
+                    initialValues={{ severity: 'media' }}
                   >
                     <Form.Item
                       name="severity"
@@ -323,11 +270,10 @@ function ProcessDetailPage() {
                       <Input prefix={<PaperClipOutlined />} placeholder="https://ejemplo.com/imagen.png" />
                     </Form.Item>
 
-                    {/* --- INICIO DE CÓDIGO NUEVO --- */}
+                    {/* --- ¡INICIO DE CAMBIO! --- */}
                     <Form.Item
                       name="evidenceFiles"
-                      label="Adjuntar Archivos (Máx. 5)"
-                      // Esta prop es clave para que 'values.evidenceFiles' sea un array de archivos
+                      label="Adjuntar Archivos" // <-- Texto actualizado
                       getValueFromEvent={(e) => {
                         if (Array.isArray(e)) {
                           return e;
@@ -336,14 +282,14 @@ function ProcessDetailPage() {
                       }}
                     >
                       <Upload
-                        multiple={true} // Permitir múltiples archivos
-                        beforeUpload={() => false} // Previene la subida automática
+                        multiple={true}
+                        beforeUpload={() => false}
                         listType="picture"
                       >
                         <Button icon={<UploadOutlined />}>Adjuntar Archivo(s)</Button>
                       </Upload>
                     </Form.Item>
-                    {/* --- FIN DE CÓDIGO NUEVO --- */}
+                    {/* --- ¡FIN DE CAMBIO! --- */}
 
                     <Form.Item>
                       <Button type="primary" htmlType="submit" loading={isSubmitting} icon={<SendOutlined />}>
@@ -381,7 +327,6 @@ function ProcessDetailPage() {
                         </>
                       }
                     />
-                    {/* Mostramos la evidencia */}
                     {incident.evidence && incident.evidence.length > 0 && (
                       <div className="evidence-list">
                         {incident.evidence.map((ev, index) => (
@@ -397,20 +342,17 @@ function ProcessDetailPage() {
                               </Tag>
                             )}
                             
-                            {/* --- INICIO DE CÓDIGO NUEVO --- */}
                             {ev.type === 'archivo' && (
                               <Tag icon={<PaperClipOutlined />} color="blue">
-                                {/* Usamos la URL base del backend + la ruta del archivo */}
                                 <a 
                                   href={`${API_URL}${ev.url}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
                                 >
-                                  {ev.content} {/* Muestra el nombre del archivo */}
+                                  {ev.content}
                                 </a>
                               </Tag>
                             )}
-                            {/* --- FIN DE CÓDIGO NUEVO --- */}
 
                           </div>
                         ))}

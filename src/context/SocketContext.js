@@ -1,10 +1,7 @@
 /*
  * Contexto de Sockets (SocketContext.js)
  * --- ¡MODIFICADO PARA NOTIFICACIONES PERSISTENTES (FASE 2 - PASO 1)! ---
- *
- * Este proveedor maneja la conexión de Socket.io.
- * Ahora también carga el historial de notificaciones desde la API
- * y provee una función para marcarlas como leídas.
+ * --- ¡MODIFICADO CON DELETE (BUG FIX)! ---
  */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
@@ -36,6 +33,24 @@ export const SocketProvider = ({ children }) => {
       console.error("Error al marcar notificaciones como leídas:", err);
     }
   }, []); // Depende de 'api' (que es constante)
+
+  // --- ¡INICIO DE CÓDIGO NUEVO! ---
+  // Función para eliminar una sola notificación
+  const deleteNotification = useCallback(async (notificationId) => {
+    try {
+      // 1. Llama a la nueva API del backend
+      await api.delete(`/api/notifications/${notificationId}`);
+      
+      // 2. Actualiza el estado local (filtrando la eliminada)
+      setNotifications(prev => 
+        prev.filter(notif => notif._id !== notificationId)
+      );
+    } catch (err) {
+      console.error("Error al eliminar notificación:", err);
+    }
+  }, []);
+  // --- ¡FIN DE CÓDIGO NUEVO! ---
+
 
   useEffect(() => {
     // Solo nos conectamos si el usuario está logueado
@@ -97,7 +112,12 @@ export const SocketProvider = ({ children }) => {
 
   // Exponemos el socket, las notificaciones Y la nueva función
   return (
-    <SocketContext.Provider value={{ socket, notifications, markAllAsRead }}>
+    <SocketContext.Provider value={{ 
+      socket, 
+      notifications, 
+      markAllAsRead, 
+      deleteNotification // <-- ¡CAMBIO! Exponemos la nueva función
+    }}>
       {children}
     </SocketContext.Provider>
   );

@@ -1,30 +1,36 @@
 /*
  * Página del Dashboard (DashboardPage.js)
- * --- ¡MODIFICADO PARA NOTIFICACIONES PERSISTENTES (FASE 2 - PASO 1)! ---
- * --- ¡MODIFICADO CON BREAKPOINT RESPONSIVE (MEJORA)! ---
+ * --- ¡MODIFICADO CON SCROLL INDEPENDIENTE (BUG FIX)! ---
+ * --- ¡MODIFICADO CON DELETE (BUG FIX)! ---
+ * --- ¡CORREGIDA LA IMPORTACIÓN DE CloseOutlined (BUG FIX)! ---
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // <-- NUEVO: Importar useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
 import ProcessModal from '../components/ProcessModal';
 import ConversationSidebar from '../components/ConversationSidebar'; 
+import AppHeader from '../components/AppHeader'; 
 
-// --- MODIFICADO: Añadimos Badge y Empty ---
 import { 
   Layout, Button, Space, Typography, Card, Tag, List, Avatar, 
-  Alert, Input, Select, Row, Col, Spin, Pagination, Badge, Empty // <-- Añadido Badge y Empty
+  Alert, Input, Select, Row, Col, Spin, Pagination, Badge, Empty
 } from 'antd';
-import { PlusOutlined, BellOutlined, CheckCircleOutlined } from '@ant-design/icons'; // <-- Añadido CheckCircleOutlined
+// --- ¡INICIO DE LA CORRECCIÓN! ---
+import { 
+  PlusOutlined, BellOutlined, CheckCircleOutlined, CloseOutlined // <-- ¡Añadido!
+} from '@ant-design/icons';
+// --- ¡FIN DE LA CORRECCIÓN! ---
 
-const { Header, Content, Sider } = Layout;
+// Quitamos 'Header' de Layout, ya no lo usamos directamente
+const { Content, Sider } = Layout; 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const PAGE_SIZE = 9;
 
-// Componente de StatusBadge (sin cambios)
+// (El componente StatusBadge no cambia)
 const StatusBadge = ({ status }) => {
   let color;
   switch (status) {
@@ -46,11 +52,11 @@ const StatusBadge = ({ status }) => {
   return <Tag color={color}>{status.replace('_', ' ').toUpperCase()}</Tag>;
 };
 
+
 function DashboardPage() {
-  const { user, logout } = useAuth();
-  // --- MODIFICADO: Obtenemos las notificaciones y la nueva función del context ---
-  const { socket, notifications, markAllAsRead } = useSocket();
-  const navigate = useNavigate(); // <-- NUEVO: Para navegar al hacer clic en notif
+  const { user } = useAuth();
+  const { socket, notifications, markAllAsRead, deleteNotification } = useSocket();
+  const navigate = useNavigate(); 
 
   const [processes, setProcesses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,10 +67,8 @@ function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProcesses, setTotalProcesses] = useState(0);
 
-  // --- NUEVO: Contar notificaciones no leídas ---
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
-  // fetchProcesses (sin cambios desde el paso anterior)
   const fetchProcesses = useCallback(async (page) => {
     try {
       setLoading(true);
@@ -85,13 +89,10 @@ function DashboardPage() {
     setLoading(false);
   }, [searchTerm, statusFilter]);
 
-  // useEffect para cargar procesos (sin cambios)
   useEffect(() => {
     fetchProcesses(currentPage);
   }, [fetchProcesses, currentPage]);
 
-  // useEffect de Sockets (Lógica de refresco de procesos)
-  // --- MODIFICADO: Ya no maneja notificaciones aquí ---
   useEffect(() => {
     if (!socket) return;
 
@@ -104,15 +105,9 @@ function DashboardPage() {
     };
 
     const handleNewProcess = (newProcess) => {
-      // Esta lógica sigue siendo para refrescar la lista de procesos
       if (currentPage === 1 && statusFilter === 'todos' && searchTerm === '') {
-        if (user?.role !== 'revisor' && newProcess.createdBy._id === user?.id) {
-           setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
-           setTotalProcesses(prev => prev + 1);
-        } else if (user?.role === 'revisor' && newProcess.assignedTo._id === user?.id) {
-           setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
-           setTotalProcesses(prev => prev + 1);
-        }
+         setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
+         setTotalProcesses(prev => prev + 1);
       } else {
         setTotalProcesses(prev => prev + 1);
       }
@@ -126,9 +121,8 @@ function DashboardPage() {
        }
     };
 
-    // Solo escuchamos eventos que afectan a la lista de procesos
     socket.on('process:status_updated', handleProcessUpdate);
-    socket.on('process:assigned', handleNewProcess); // Este es el evento de 'proceso'
+    socket.on('process:assigned', handleNewProcess); 
     socket.on('incident:created', handleIncidentCreated);
 
     return () => {
@@ -137,9 +131,8 @@ function DashboardPage() {
       socket.off('incident:created', handleIncidentCreated);
     };
 
-  }, [socket, user?.id, user?.role, currentPage, statusFilter, searchTerm]);
+  }, [socket, user?.role, currentPage, statusFilter, searchTerm]);
 
-  // (Funciones de handlers sin cambios)
   const handleProcessCreated = (newProcess) => {
     if (currentPage === 1 && statusFilter === 'todos' && searchTerm === '') {
       setProcesses(prev => [newProcess, ...prev.slice(0, PAGE_SIZE - 1)]);
@@ -161,49 +154,27 @@ function DashboardPage() {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-
-  // --- NUEVO: Handler para clic en notificación ---
+  
   const handleNotificationClick = (notification) => {
     if (notification.link) {
       navigate(notification.link);
     }
-    // (Idealmente, aquí llamaríamos a una API para marcar esta *única* notif como leída)
-    // Por ahora, solo el "marcar todas" funciona
   };
+
+  const handleDeleteNotification = (e, notificationId) => {
+    e.stopPropagation();
+    deleteNotification(notificationId);
+  };
+
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* --- HEADER DE AntD --- */}
-      <Header className="app-header">
-        <div className="app-header-logo">
-          <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
-        </div>
-        <Space>
-          {user?.role !== 'revisor' && (
-            <Link to="/reports">
-              <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
-            </Link>
-          )}
-          {/* --- NUEVO: Badge de notificaciones en el header --- */}
-          <Badge count={unreadCount} size="small" style={{marginRight: '1rem'}}>
-             {/* Este ícono podría ir a una página /notificaciones en el futuro */}
-            <BellOutlined style={{ color: 'white', fontSize: '1.2rem', cursor: 'pointer' }} />
-          </Badge>
-
-          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-            Bienvenido, {user?.name} ({user?.role})
-          </Text>
-          <Button type="primary" danger onClick={logout}>
-            Cerrar Sesión
-          </Button>
-        </Space>
-      </Header>
       
-      {/* --- LAYOUT CON SIDER --- */}
+      <AppHeader />
+      
       <Layout>
         <Content className="app-content">
           <div className="dashboard-processes">
-            {/* Título y botón de crear */}
             <div className="content-header">
               <Title level={2}>Panel de Procesos</Title>
               {user?.role !== 'revisor' && (
@@ -222,7 +193,6 @@ function DashboardPage() {
               <Title level={3} style={{color: 'var(--color-texto-secundario)', fontWeight: 400}}>Mis Auditorías Asignadas</Title>
             )}
 
-            {/* SECCIÓN DE FILTROS (sin cambios) */}
             <Card style={{ marginBottom: '24px' }}>
               <Row gutter={16}>
                 <Col xs={24} md={16}>
@@ -257,7 +227,6 @@ function DashboardPage() {
             
             {error && <Alert message={error} type="error" showIcon />}
             
-            {/* LISTA DE PROCESOS (sin cambios) */}
             {loading ? (
               <div style={{textAlign: 'center', padding: '50px'}}>
                 <Spin size="large" />
@@ -291,7 +260,6 @@ function DashboardPage() {
                   ))}
                 </div>
 
-                {/* PAGINACIÓN (sin cambios) */}
                 {totalProcesses > PAGE_SIZE && (
                   <Pagination
                     current={currentPage}
@@ -307,12 +275,11 @@ function DashboardPage() {
           </div>
         </Content>
 
-        {/* --- ¡SIDER MODIFICADO! --- */}
         <Sider 
           className="app-sider" 
           width={350}
-          breakpoint="lg" // <-- AÑADIDO: Punto de quiebre
-          collapsedWidth="0" // <-- AÑADIDO: Se oculta en lugar de colapsar
+          breakpoint="lg" 
+          collapsedWidth="0"
         >
           <div className="sider-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -322,7 +289,6 @@ function DashboardPage() {
                 </Badge>
                 Notificaciones
               </Title>
-              {/* --- NUEVO: Botón para marcar como leídas --- */}
               {unreadCount > 0 && (
                 <Button 
                   type="link" 
@@ -334,44 +300,56 @@ function DashboardPage() {
                 </Button>
               )}
             </div>
-            <List
-              itemLayout="horizontal"
-              dataSource={notifications} // <-- Ahora viene del context con historial
-              locale={{ emptyText: <Empty description="No hay notificaciones." /> }}
-              renderItem={(notif) => (
-                // --- MODIFICADO: Añade clase si está leída y onClick ---
-                <List.Item 
-                  className={notif.read ? "notification-item notification-item-read" : "notification-item"}
-                  onClick={() => handleNotificationClick(notif)}
-                  style={{ cursor: notif.link ? 'pointer' : 'default' }}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar 
-                        icon={<BellOutlined />} 
-                        style={{
-                          backgroundColor: notif.read ? '#f0f0f0' : '#e6f7ff', 
-                          color: notif.read ? '#aaa' : '#007bff'
-                        }} 
+            
+            <div className="notification-list-wrapper">
+              <List
+                itemLayout="horizontal"
+                dataSource={notifications} 
+                locale={{ emptyText: <Empty description="No hay notificaciones." /> }}
+                renderItem={(notif) => (
+                  <List.Item 
+                    className={notif.read ? "notification-item notification-item-read" : "notification-item"}
+                    onClick={() => handleNotificationClick(notif)}
+                    style={{ cursor: notif.link ? 'pointer' : 'default' }}
+                    extra={
+                      <Button
+                        className="notification-delete-btn"
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={(e) => handleDeleteNotification(e, notif._id)}
                       />
                     }
-                    title={<Text strong={!notif.read}>{notif.message}</Text>}
-                    description={
-                      <Text type="secondary">
-                        {new Date(notif.createdAt).toLocaleString()}
-                      </Text>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar 
+                          icon={<BellOutlined />} 
+                          style={{
+                            backgroundColor: notif.read ? '#f0f0f0' : '#e6f7ff', 
+                            color: notif.read ? '#aaa' : '#007bff'
+                          }} 
+                        />
+                      }
+                      title={<Text strong={!notif.read}>{notif.message}</Text>}
+                      description={
+                        <Text type="secondary">
+                          {new Date(notif.createdAt).toLocaleString()}
+                        </Text>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            </div>
+            
           </div>
           
           <ConversationSidebar />
         </Sider>
       </Layout>
 
-      {/* --- MODAL DE AntD (sin cambios) --- */}
       <ProcessModal 
         open={showModal} 
         onClose={() => setShowModal(false)}

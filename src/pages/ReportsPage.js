@@ -1,24 +1,28 @@
 /*
  * Página de Reportes (ReportsPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN LAYOUT! ---
+ * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
  */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
-// --- ¡CORRECCIÓN! AÑADIMOS TODOS LOS COMPONENTES QUE FALTABAN ---
+// --- ¡INICIO DE CAMBIO! ---
+import AppHeader from '../components/AppHeader'; // Importamos la cabecera correcta
 import { 
   Layout, Button, Space, Typography, Card, Tag, Spin, 
   Alert, Empty, Row, Col, List, Divider 
 } from 'antd';
-import { BarChartOutlined } from '@ant-design/icons'; // Ícono para el título
+import { BarChartOutlined } from '@ant-design/icons';
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography; // 'Text' se importa desde Typography
+// Ya no importamos 'Header' de Layout
+const { Content } = Layout;
+const { Title, Text } = Typography;
+// --- ¡FIN DE CAMBIO! ---
 
 function ReportsPage() {
-  const { user, logout } = useAuth();
+  // --- ¡CAMBIO! Ya no necesitamos 'logout' aquí ---
+  const { user } = useAuth();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,7 +30,6 @@ function ReportsPage() {
   // Al cargar la página, pido los datos a la API de reportes
   useEffect(() => {
     async function fetchReport() {
-      // Si el usuario es 'revisor', lo saco de aquí.
       if (user?.role === 'revisor') {
         setError('Acceso denegado. Esta página es solo para supervisores y administradores.');
         setLoading(false);
@@ -61,31 +64,11 @@ function ReportsPage() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Encabezado de AntD */}
-      <Header className="app-header">
-        <Space>
-          <Link to="/" className="back-button-ant">
-            &larr;
-          </Link>
-          <div className="app-header-logo">
-             <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
-          </div>
-          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| Reportes de Auditoría</Text>
-        </Space>
-        <Space>
-          {user?.role !== 'revisor' && (
-            <Link to="/reports">
-              <Button type="text" style={{ color: '#007bff', fontWeight: '600' }}>Reportes</Button>
-            </Link>
-          )}
-          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-            Bienvenido, {user?.name} ({user?.role})
-          </Text>
-          <Button type="primary" danger onClick={logout}>
-            Cerrar Sesión
-          </Button>
-        </Space>
-      </Header>
+      
+      {/* --- ¡INICIO DE CAMBIO! --- */}
+      {/* Usamos el componente AppHeader reutilizable */}
+      <AppHeader title="Reportes de Auditoría" backLink="/" />
+      {/* --- ¡FIN DE CAMBIO! --- */}
 
       {/* Contenido de la página de reportes */}
       <Content className="app-content">
@@ -100,7 +83,6 @@ function ReportsPage() {
             </div>
           )}
           
-          {/* --- ¡CORREGIDO! <Alert> ahora está definido --- */}
           {error && <Alert message={error} type="error" showIcon />}
           
           {report && !loading && !error && (

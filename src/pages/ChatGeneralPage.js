@@ -1,32 +1,35 @@
 /*
  * Página de Chat General (ChatGeneralPage.js)
  * --- ¡MODIFICADO CON "IS TYPING" (FASE 2 - PASO 2)! ---
+ * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
-// Importamos los nuevos componentes de AntD
+// --- ¡INICIO DE CAMBIO! ---
+import AppHeader from '../components/AppHeader'; // Importamos la cabecera correcta
 import { Layout, Button, Space, Typography, Card, List, Avatar, Input, Empty } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 
-const { Header, Content } = Layout;
+// Ya no importamos 'Header' de Layout
+const { Content } = Layout;
 const { Title, Text } = Typography;
+// --- ¡FIN DE CAMBIO! ---
 const { Search } = Input; // Componente de Input con botón integrado
 
 function ChatGeneralPage() {
   const { socket } = useSocket();
-  const { user, logout } = useAuth();
+  // --- ¡CAMBIO! Ya no necesitamos 'logout' aquí ---
+  const { user } = useAuth();
   
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState(''); 
   const [isSending, setIsSending] = useState(false); 
   
-  // --- NUEVO: Estados y Refs para "Escribiendo..." ---
   const [typingMessage, setTypingMessage] = useState('');
   const typingTimeoutRef = useRef(null);
-  const typingUsers = useRef(new Map()).current; // Mapa para manejar múltiples usuarios
-  // --- Fin de nuevos estados ---
+  const typingUsers = useRef(new Map()).current; 
 
   const messagesEndRef = useRef(null);
 
@@ -34,7 +37,6 @@ function ChatGeneralPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // --- NUEVO: Función para actualizar el mensaje de "escribiendo" ---
   const updateTypingMessage = useCallback(() => {
     const names = Array.from(typingUsers.values());
     if (names.length === 0) {
@@ -46,7 +48,7 @@ function ChatGeneralPage() {
     }
   }, [typingUsers]);
 
-  // Efecto para configurar los listeners del socket
+  // (El resto de los hooks useEffect y los handlers no cambian...)
   useEffect(() => {
     if (!socket) return; 
 
@@ -61,7 +63,6 @@ function ChatGeneralPage() {
 
     const handleNewMessage = (savedMessage) => {
       console.log('ChatGeneralPage: Recibiendo nuevo mensaje');
-      // Cuando llega un mensaje, el usuario DEJA de escribir
       typingUsers.delete(savedMessage.senderName);
       updateTypingMessage();
       
@@ -74,13 +75,10 @@ function ChatGeneralPage() {
     };
     socket.on('chat:receive_general', handleNewMessage);
 
-    // --- NUEVO: Listeners para "Escribiendo..." ---
     const handleUserTyping = ({ name }) => {
-      if (name === user.name) return; // No mostrar mi propio "escribiendo"
+      if (name === user.name) return;
       typingUsers.set(name, name);
       updateTypingMessage();
-      
-      // Reinicia el timeout para este usuario (no implementado aquí, pero es una mejora)
     };
     
     const handleUserStoppedTyping = ({ name }) => {
@@ -90,42 +88,35 @@ function ChatGeneralPage() {
 
     socket.on('chat:user_typing_general', handleUserTyping);
     socket.on('chat:user_stopped_typing_general', handleUserStoppedTyping);
-    // --- Fin de nuevos listeners ---
 
-    // 4. Función de limpieza
     return () => {
       socket.off('chat:general_history', handleHistory);
       socket.off('chat:receive_general', handleNewMessage);
-      socket.off('chat:user_typing_general', handleUserTyping); // <-- NUEVO
-      socket.off('chat:user_stopped_typing_general', handleUserStoppedTyping); // <-- NUEVO
+      socket.off('chat:user_typing_general', handleUserTyping); 
+      socket.off('chat:user_stopped_typing_general', handleUserStoppedTyping);
     };
-  }, [socket, user.name, typingUsers, updateTypingMessage]); // <-- Dependencias actualizadas
+  }, [socket, user.name, typingUsers, updateTypingMessage]); 
 
-  // --- NUEVO: Función para manejar el evento "onChange" del input ---
   const handleInputChange = (e) => {
     const value = e.target.value;
     setNewMessage(value);
 
     if (!socket) return;
 
-    // Si no he enviado un evento "start" Y estoy escribiendo algo
     if (!typingTimeoutRef.current && value.trim() !== '') {
       socket.emit('chat:start_typing_general');
     }
 
-    // Limpio el timeout anterior
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Creo un nuevo timeout. Si el usuario no escribe en 2s, emito "stop".
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit('chat:stop_typing_general');
-      typingTimeoutRef.current = null; // Reseteo el ref
+      typingTimeoutRef.current = null;
     }, 2000);
   };
   
-  // Función para manejar el envío del mensaje
   const handleSend = (value) => {
     const content = value.trim();
     if (!content || !socket) return; 
@@ -135,45 +126,23 @@ function ChatGeneralPage() {
       content: content,
     });
     
-    // --- NUEVO: Al enviar, dejo de escribir ---
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     typingTimeoutRef.current = null;
     socket.emit('chat:stop_typing_general');
-    // --- Fin ---
 
-    setNewMessage(''); // Limpio el input controlado
+    setNewMessage('');
     setIsSending(false);
   };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Encabezado de AntD (sin cambios) */}
-      <Header className="app-header">
-        <Space>
-          <Link to="/" className="back-button-ant">
-            &larr;
-          </Link>
-          <div className="app-header-logo">
-             <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
-          </div>
-          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| Chat General</Text>
-        </Space>
-        <Space>
-          {user?.role !== 'revisor' && (
-            <Link to="/reports">
-              <Button type="text" style={{ color: '#fff' }}>Reportes</Button>
-            </Link>
-          )}
-          <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-            Bienvenido, {user?.name} ({user?.role})
-          </Text>
-          <Button type="primary" danger onClick={logout}>
-            Cerrar Sesión
-          </Button>
-        </Space>
-      </Header>
+      
+      {/* --- ¡INICIO DE CAMBIO! --- */}
+      {/* Usamos el componente AppHeader reutilizable */}
+      <AppHeader title="Chat General" backLink="/" />
+      {/* --- ¡FIN DE CAMBIO! --- */}
       
       {/* Contenido principal con el chat */}
       <Content className="app-content-chat">
@@ -197,11 +166,9 @@ function ChatGeneralPage() {
               </List.Item>
             )}
           />
-          {/* Div para forzar el scroll al final */}
           <div ref={messagesEndRef} />
         </Card>
         
-        {/* --- NUEVO: Indicador de "Escribiendo..." --- */}
         <div className="typing-indicator-container">
           {typingMessage && (
             <Text type="secondary" className="typing-indicator">
@@ -209,7 +176,6 @@ function ChatGeneralPage() {
             </Text>
           )}
         </div>
-        {/* --- Fin de "Escribiendo..." --- */}
 
         {/* Formulario de envío (pegado al fondo) */}
         <div className="chat-input-container">
@@ -218,7 +184,7 @@ function ChatGeneralPage() {
             enterButton={<Button type="primary" icon={<SendOutlined />} />}
             size="large"
             value={newMessage}
-            onChange={handleInputChange} // <-- MODIFICADO
+            onChange={handleInputChange}
             onSearch={handleSend}
             loading={isSending}
             autoComplete="off"

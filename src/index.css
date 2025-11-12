@@ -2,6 +2,7 @@
  * Archivo de estilos globales (index.css)
  * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
  * --- ¡MODIFICADO CON MEDIA QUERIES (MEJORA)! ---
+ * --- ¡MODIFICADO CON SCROLL INDEPENDIENTE (BUG FIX)! ---
  */
 :root {
   --color-primario: #007bff;
@@ -56,14 +57,20 @@ body {
   background-color: var(--color-fondo);
 }
 
+/* --- INICIO DE CAMBIOS PARA EL SCROLL --- */
+
 .app-sider {
   background: var(--color-superficie) !important; /* Sider blanco */
   padding: 24px;
   border-left: 1px solid var(--color-borde);
-  overflow-y: auto;
-  /* --- ¡INICIO DE CAMBIO! --- */
-  /* Por defecto, el Sider es parte del flujo normal (para móviles) */
+  /* overflow-y: auto; <-- ¡CAMBIO! Quitamos esto */
+  
+  /* 1. Convertimos el Sider en un contenedor flex (columna) */
+  display: flex;
+  flex-direction: column;
 }
+
+/* --- FIN DE CAMBIOS --- */
 
 /* --- ¡NUEVO! Solo hacemos el Sider pegajoso en pantallas grandes --- */
 @media (min-width: 992px) {
@@ -75,12 +82,29 @@ body {
     top: 64px; /* Pegado debajo del header */
   }
 }
-/* --- FIN DE CAMBIO --- */
 
+
+/* --- INICIO DE CAMBIOS PARA EL SCROLL --- */
 
 .sider-section {
   margin-bottom: 2rem;
+  
+  /* 3. Hacemos que la sección de notificaciones sea flexible */
+  flex: 1 1 auto;
+  min-height: 0; /* Clave para que el overflow-y funcione en un hijo de flex */
+  display: flex;
+  flex-direction: column;
 }
+
+/* 4. Esta es la nueva clase que añadimos en DashboardPage.js */
+.notification-list-wrapper {
+  flex-grow: 1; /* Hace que este div ocupe todo el espacio sobrante */
+  overflow-y: auto; /* ¡AQUÍ ESTÁ EL SCROLL! */
+  min-height: 100px; /* Le damos una altura mínima por si acaso */
+}
+
+/* --- FIN DE CAMBIOS --- */
+
 
 /* Encabezado del contenido (Título + Botón) */
 .content-header {
@@ -274,6 +298,10 @@ body {
 .conversation-sidebar {
   display: flex;
   flex-direction: column;
+  /* --- INICIO DE CAMBIO --- */
+  /* 5. Hacemos que la sección de chat NO se encoja */
+  flex-shrink: 0;
+  /* --- FIN DE CAMBIO --- */
 }
 .conversation-header {
   display: flex;
@@ -494,6 +522,25 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* --- Estilos para el botón de eliminar notificación --- */
+.notification-item .notification-delete-btn {
+  /* Oculta el botón por defecto */
+  opacity: 0.2;
+  transition: opacity 0.2s;
+  padding: 0 8px; /* Hace más fácil hacer clic */
+}
+
+/* Muestra el botón cuando el mouse está sobre el item */
+.notification-item:hover .notification-delete-btn {
+  opacity: 1;
+}
+
+.notification-delete-btn:hover {
+  /* Asegura que tenga un fondo rojo al pasar el mouse */
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
+
 
 /* --- ¡NUEVAS REGLAS RESPONSIVE! --- */
 @media (max-width: 768px) {
