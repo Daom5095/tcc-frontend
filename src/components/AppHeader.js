@@ -1,6 +1,7 @@
 /*
  * Componente Reutilizable de Cabecera (AppHeader.js)
  * Creado para (FASE 2 - PASO 3)
+ * --- ¡MODIFICADO CON CLASES RESPONSIVE (MEJORA)! ---
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -66,7 +67,8 @@ function AppHeader({ title, backLink }) {
            <Title level={3} style={{ color: 'white', margin: 0 }}>Aegis</Title>
         </div>
         {title && (
-          <Text style={{color: '#aaa', paddingLeft: '10px'}}>| {title}</Text>
+          // --- ¡CLASE AÑADIDA! ---
+          <Text className="header-page-title" style={{color: '#aaa', paddingLeft: '10px'}}>| {title}</Text>
         )}
       </Space>
       
@@ -84,7 +86,8 @@ function AppHeader({ title, backLink }) {
         <Dropdown menu={{ items: menuItems }} placement="bottomRight">
           <Space style={{ cursor: 'pointer' }}>
             <Avatar size="small" style={{ backgroundColor: '#007bff' }} icon={<UserOutlined />} />
-            <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+            {/* --- ¡CLASE AÑADIDA! --- */}
+            <Text className="header-user-text" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
               Hola, {user?.name}
             </Text>
           </Space>

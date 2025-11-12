@@ -59,8 +59,8 @@ function ProcessDetailPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- URL del Backend (para los enlaces de archivos) ---
-  const API_URL = 'http://localhost:4000'; // <-- NUEVO: Define la URL de tu backend
+  // --- ¡CORRECCIÓN! Usamos la variable de entorno, igual que en api.js ---
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
   // --- Función para cargar el detalle del proceso ---
   const fetchProcessDetails = useCallback(async () => {

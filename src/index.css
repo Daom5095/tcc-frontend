@@ -1,6 +1,7 @@
 /*
  * Archivo de estilos globales (index.css)
  * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
+ * --- ¡MODIFICADO CON MEDIA QUERIES (MEJORA)! ---
  */
 :root {
   --color-primario: #007bff;
@@ -33,15 +34,6 @@ body {
   box-sizing: border-box;
 }
 
-/* * Todos los estilos de layout y componentes antiguos 
- * (.auth-*, .dashboard-*, .process-list-*, .modal-*, .detail-page-*, etc.) 
- * han sido eliminados.
- *
- * Ant Design <Layout>, <Card>, <Form>, <List>, etc. los reemplazan.
- * Abajo solo hay estilos de *ajuste* para AntD.
- */
-
-
 /* --- Estilos para Layout de AntD --- */
 .app-header {
   display: flex;
@@ -69,12 +61,22 @@ body {
   padding: 24px;
   border-left: 1px solid var(--color-borde);
   overflow-y: auto;
-  /* Altura = 100% de la ventana menos 64px del header */
-  height: calc(100vh - 64px); 
-  /* Hago que el sider sea fijo */
-  position: sticky;
-  top: 64px; /* Pegado debajo del header */
+  /* --- ¡INICIO DE CAMBIO! --- */
+  /* Por defecto, el Sider es parte del flujo normal (para móviles) */
 }
+
+/* --- ¡NUEVO! Solo hacemos el Sider pegajoso en pantallas grandes --- */
+@media (min-width: 992px) {
+  .app-sider {
+    /* Altura = 100% de la ventana menos 64px del header */
+    height: calc(100vh - 64px); 
+    /* Hago que el sider sea fijo */
+    position: sticky;
+    top: 64px; /* Pegado debajo del header */
+  }
+}
+/* --- FIN DE CAMBIO --- */
+
 
 .sider-section {
   margin-bottom: 2rem;
@@ -88,6 +90,10 @@ body {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-borde);
+  
+  /* --- ¡NUEVO! Para móviles --- */
+  flex-wrap: wrap; /* Permite que los elementos bajen si no caben */
+  gap: 1rem; /* Espacio entre el título y el botón si bajan */
 }
 
 /* Grilla para las tarjetas de procesos */
@@ -489,3 +495,25 @@ body {
   to { opacity: 1; }
 }
 
+/* --- ¡NUEVAS REGLAS RESPONSIVE! --- */
+@media (max-width: 768px) {
+  /* Oculta el texto de "Hola, {nombre}" en el header en móviles */
+  .header-user-text {
+    display: none;
+  }
+  
+  /* Oculta el título de la página (ej. "| Detalle de Auditoría") en móviles */
+  .header-page-title {
+    display: none;
+  }
+  
+  /* Ajusta el padding del header en móviles */
+  .app-header {
+    padding: 0 16px !important;
+  }
+  
+  /* Ajusta el padding del contenido en móviles */
+  .app-content, .app-content-detail, .app-content-chat {
+    padding: 16px;
+  }
+}

@@ -1,6 +1,7 @@
 /*
  * Página del Dashboard (DashboardPage.js)
  * --- ¡MODIFICADO PARA NOTIFICACIONES PERSISTENTES (FASE 2 - PASO 1)! ---
+ * --- ¡MODIFICADO CON BREAKPOINT RESPONSIVE (MEJORA)! ---
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // <-- NUEVO: Importar useNavigate
@@ -306,8 +307,13 @@ function DashboardPage() {
           </div>
         </Content>
 
-        {/* --- SIDER DE AntD (MODIFICADO) --- */}
-        <Sider className="app-sider" width={350}>
+        {/* --- ¡SIDER MODIFICADO! --- */}
+        <Sider 
+          className="app-sider" 
+          width={350}
+          breakpoint="lg" // <-- AÑADIDO: Punto de quiebre
+          collapsedWidth="0" // <-- AÑADIDO: Se oculta en lugar de colapsar
+        >
           <div className="sider-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <Title level={4} style={{ margin: 0 }}>
