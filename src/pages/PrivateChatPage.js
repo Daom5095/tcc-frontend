@@ -42,7 +42,8 @@ function PrivateChatPage() {
   // Función para obtener el nombre del "otro" usuario en el chat
   const getOtherParticipant = (convo) => {
     if (!convo || !user) return { name: 'Chat' };
-    return convo.participants.find(p => p._id !== user.id) || { name: 'Chat Privado' };
+   // Aplicamos la misma corrección aquí
+  return convo.participants.find(p => p._id !== (user.id || user._id)) || { name: 'Chat Privado' };
   };
 
   // 1. Cargar el historial de mensajes

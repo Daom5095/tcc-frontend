@@ -62,7 +62,7 @@ function ConversationSidebar() {
 
   // Función para obtener el nombre del "otro" participante
   const getOtherParticipantName = (convo) => {
-    const otherUser = convo.participants.find(p => p._id !== user.id);
+  const otherUser = convo.participants.find(p => p._id !== (user.id || user._id));
     return otherUser ? otherUser.name : 'Usuario';
   };
 
@@ -111,7 +111,7 @@ function ConversationSidebar() {
             className="contact-list-antd" // Puedes usar esto para estilos si lo necesitas
             itemLayout="horizontal"
             dataSource={users}
-            locale={{ emptyText: 'No se encontraron otros usuarios.' }}
+            locale={{ emptyText: 'No se e ncontraron otros usuarios.' }}
             renderItem={(contact) => (
               <List.Item 
                 className="contact-item-antd"
