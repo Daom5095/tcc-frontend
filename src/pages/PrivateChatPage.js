@@ -1,23 +1,17 @@
 /*
  * Página de Chat Privado (PrivateChatPage.js)
- * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
- * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-// import { useParams, Link } from 'react-router-dom'; // <-- CAMBIO: Link no se usa
 import { useParams } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-
-// --- ¡INICIO DE CAMBIO! ---
 import AppHeader from '../components/AppHeader';
 import { Layout, Button, Typography, Card, List, Avatar, Input, Empty, Spin } from 'antd'; // <-- 'Space' eliminado
 import { SendOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
-const { Text } = Typography; // <-- 'Title' eliminado
-// --- ¡FIN DE CAMBIO! ---
+const { Text } = Typography; 
 const { Search } = Input;
 
 function PrivateChatPage() {
@@ -37,7 +31,7 @@ function PrivateChatPage() {
 
   const messagesEndRef = useRef(null);
 
-  // (El resto del código no cambia...)
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

@@ -1,6 +1,6 @@
 /*
  * Página de Administración de Usuarios (AdminUsersPage.js)
- * Creada para (FASE 3 - PASO 9)
+ * 
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import api from '../services/api';
 import AppHeader from '../components/AppHeader';
 import { 
   Layout, Typography, Table, Select, Switch, Tag, 
-  Spin, Alert, message, Space // <-- MODIFICADO: 'Space' ha sido añadido aquí
+  Spin, Alert, message, Space 
 } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
@@ -17,7 +17,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 function AdminUsersPage() {
-  const { user } = useAuth(); // Para obtener mi propio ID
+  const { user } = useAuth(); 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,7 +58,6 @@ function AdminUsersPage() {
       
     } catch (err) {
       message.error(err.response?.data?.message || 'Error al cambiar el rol');
-      // Revertir el cambio visual si falla (opcional, pero buena UX)
       fetchUsers();
     }
   };
@@ -82,7 +81,7 @@ function AdminUsersPage() {
       
     } catch (err) {
       message.error(err.response?.data?.message || 'Error al cambiar el estado');
-      fetchUsers(); // Revertir
+      fetchUsers(); 
     }
   };
 
@@ -114,7 +113,7 @@ function AdminUsersPage() {
           value={role}
           style={{ width: 120 }}
           onChange={(newRole) => handleRoleChange(record._id, newRole)}
-          disabled={record._id === user.id} // Deshabilitado para mi propia cuenta
+          disabled={record._id === user.id} 
         >
           <Option value="admin">Admin</Option>
           <Option value="supervisor">Supervisor</Option>
@@ -138,7 +137,7 @@ function AdminUsersPage() {
             unCheckedChildren={<CloseOutlined />}
             checked={isActive}
             onChange={(checked) => handleStatusChange(record._id, checked)}
-            disabled={record._id === user.id} // Deshabilitado para mi propia cuenta
+            disabled={record._id === user.id} 
           />
           <Tag color={isActive ? 'success' : 'error'}>
             {isActive ? 'Activo' : 'Inactivo'}

@@ -1,8 +1,5 @@
 /*
  * Archivo de estilos globales (index.css)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
- * --- ¡MODIFICADO CON MEDIA QUERIES (MEJORA)! ---
- * --- ¡MODIFICADO CON SCROLL INDEPENDIENTE (BUG FIX)! ---
  */
 :root {
   --color-primario: #007bff;
@@ -57,22 +54,18 @@ body {
   background-color: var(--color-fondo);
 }
 
-/* --- INICIO DE CAMBIOS PARA EL SCROLL --- */
-
 .app-sider {
   background: var(--color-superficie) !important; /* Sider blanco */
   padding: 24px;
   border-left: 1px solid var(--color-borde);
-  /* overflow-y: auto; <-- ¡CAMBIO! Quitamos esto */
+  /* overflow-y: auto; */
   
   /* 1. Convertimos el Sider en un contenedor flex (columna) */
   display: flex;
   flex-direction: column;
 }
 
-/* --- FIN DE CAMBIOS --- */
-
-/* --- ¡NUEVO! Solo hacemos el Sider pegajoso en pantallas grandes --- */
+/* ---Solo hacemos el Sider pegajoso en pantallas grandes --- */
 @media (min-width: 992px) {
   .app-sider {
     /* Altura = 100% de la ventana menos 64px del header */
@@ -83,8 +76,6 @@ body {
   }
 }
 
-
-/* --- INICIO DE CAMBIOS PARA EL SCROLL --- */
 
 .sider-section {
   margin-bottom: 2rem;
@@ -99,11 +90,10 @@ body {
 /* 4. Esta es la nueva clase que añadimos en DashboardPage.js */
 .notification-list-wrapper {
   flex-grow: 1; /* Hace que este div ocupe todo el espacio sobrante */
-  overflow-y: auto; /* ¡AQUÍ ESTÁ EL SCROLL! */
+  overflow-y: auto;
   min-height: 100px; /* Le damos una altura mínima por si acaso */
 }
 
-/* --- FIN DE CAMBIOS --- */
 
 
 /* Encabezado del contenido (Título + Botón) */
@@ -115,7 +105,6 @@ body {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-borde);
   
-  /* --- ¡NUEVO! Para móviles --- */
   flex-wrap: wrap; /* Permite que los elementos bajen si no caben */
   gap: 1rem; /* Espacio entre el título y el botón si bajan */
 }
@@ -298,10 +287,8 @@ body {
 .conversation-sidebar {
   display: flex;
   flex-direction: column;
-  /* --- INICIO DE CAMBIO --- */
   /* 5. Hacemos que la sección de chat NO se encoja */
   flex-shrink: 0;
-  /* --- FIN DE CAMBIO --- */
 }
 .conversation-header {
   display: flex;
@@ -506,7 +493,7 @@ body {
   opacity: 0.7; /* Le da un efecto de "desvanecido" */
 }
 
-/* --- Estilos para Indicador "Escribiendo..." (Fase 2 - Paso 2) --- */
+/* --- Estilos para Indicador "Escribiendo..." --- */
 .typing-indicator-container {
   height: 24px; /* Altura fija para que no salte la UI */
   padding: 0 24px;
@@ -541,8 +528,6 @@ body {
   background-color: rgba(255, 0, 0, 0.1) !important;
 }
 
-
-/* --- ¡NUEVAS REGLAS RESPONSIVE! --- */
 @media (max-width: 768px) {
   /* Oculta el texto de "Hola, {nombre}" en el header en móviles */
   .header-user-text {

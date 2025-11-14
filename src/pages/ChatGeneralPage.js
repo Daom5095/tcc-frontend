@@ -1,21 +1,17 @@
 /*
  * Página de Chat General (ChatGeneralPage.js)
- * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
- * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-// import { Link } from 'react-router-dom'; // <-- CAMBIO: Ya no se usa aquí
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 
-// --- ¡INICIO DE CAMBIO! ---
+
 import AppHeader from '../components/AppHeader'; 
-import { Layout, Button, Typography, Card, List, Avatar, Input, Empty } from 'antd'; // <-- 'Space' eliminado
+import { Layout, Button, Typography, Card, List, Avatar, Input, Empty } from 'antd'; 
 import { SendOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
-const { Text } = Typography; // <-- 'Title' eliminado
-// --- ¡FIN DE CAMBIO! ---
+const { Text } = Typography; 
 const { Search } = Input;
 
 function ChatGeneralPage() {
@@ -32,7 +28,7 @@ function ChatGeneralPage() {
 
   const messagesEndRef = useRef(null);
 
-  // (El resto del código no cambia...)
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

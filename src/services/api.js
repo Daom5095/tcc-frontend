@@ -9,7 +9,7 @@
 import axios from 'axios';
 
 // 1. URL base de mi backend
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';// Asegúrate que este sea el puerto de tu backend
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 // 2. Creamos una instancia de Axios
 const api = axios.create({

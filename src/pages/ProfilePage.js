@@ -1,11 +1,10 @@
 /*
  * Página de Perfil de Usuario (ProfilePage.js)
- * Creada para (FASE 2 - PASO 3)
  */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import AppHeader from '../components/AppHeader'; // Importamos la nueva cabecera
+import AppHeader from '../components/AppHeader'; 
 import { 
   Layout, Card, Form, Input, Button, Alert, Row, Col, Typography, notification, Spin 
 } from 'antd';
@@ -15,7 +14,7 @@ const { Content } = Layout;
 const { Title } = Typography;
 
 function ProfilePage() {
-  const { user, updateUserContext } = useAuth(); // Obtenemos el usuario y la función de actualizar
+  const { user, updateUserContext } = useAuth(); 
   const [profileForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
 
@@ -35,7 +34,6 @@ function ProfilePage() {
         name: values.name,
       });
       
-      // Actualizamos el nombre en el AuthContext (para que se vea en el header)
       updateUserContext(updatedUser); 
       
       notification.success({
@@ -81,10 +79,9 @@ function ProfilePage() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Usamos la nueva cabecera reutilizable */}
       <AppHeader title="Mi Perfil" backLink="/" />
       
-      <Content className="app-content-detail"> {/* Reutilizamos la clase de 'ProcessDetail' */}
+      <Content className="app-content-detail"> 
         <Title level={2} style={{ marginBottom: '2rem' }}>Configuración de mi Perfil</Title>
         <Row gutter={[24, 24]}>
           
@@ -151,7 +148,7 @@ function ProfilePage() {
                     { required: true, message: 'Ingresa tu nueva contraseña' },
                     { min: 6, message: 'Debe tener al menos 6 caracteres' }
                   ]}
-                  hasFeedback // Muestra íconos de validación
+                  hasFeedback 
                 >
                   <Input.Password prefix={<LockOutlined />} placeholder="Nueva contraseña (mín. 6 caracteres)" />
                 </Form.Item>

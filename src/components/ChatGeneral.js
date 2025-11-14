@@ -1,7 +1,7 @@
 /*
  * Componente ChatGeneral.js
  *
- * Este componente ahora es "tonto". Solo muestra los mensajes
+ * Este componente sol muestra los mensajes del chat general.
  * que recibe del SocketContext y le dice al backend cuándo se
  * envía un nuevo mensaje.
  */
@@ -10,13 +10,12 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 
 function ChatGeneral() {
-  // --- ¡MEJORA! ---
   // Obtenemos el estado de los mensajes DESDE EL CONTEXTO.
   // Este estado 'messages' persistirá aunque naveguemos a otra página.
   const { socket, messages } = useSocket(); 
-  const { user } = useAuth(); // Obtengo mis datos de usuario
+  const { user } = useAuth(); 
   
-  const [newMessage, setNewMessage] = useState(''); // Estado local solo para el input
+  const [newMessage, setNewMessage] = useState(''); 
   
   const messagesEndRef = useRef(null);
 
@@ -25,14 +24,11 @@ function ChatGeneral() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // --- ¡ELIMINADO! ---
-  // El useEffect que escuchaba 'recent_messages' y 'message_saved'
-  // se eliminó de aquí. ¡SocketContext se encarga de eso!
   
   // Función para manejar el envío del formulario
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !socket) return; // No envío mensajes vacíos
+    if (!newMessage.trim() || !socket) return; 
 
     // Solo emitimos el evento.
     // El listener en SocketContext se encargará de recibir

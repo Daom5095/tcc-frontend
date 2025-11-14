@@ -1,10 +1,8 @@
 /*
  * Contexto de Autenticación (AuthContext.js)
- * --- ¡MODIFICADO CON updateUserContext (FASE 2 - PASO 3)! ---
  */
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../services/api'; // Importamos nuestro api de axios
-
+import api from '../services/api'; 
 // 1. Creamos el Contexto
 const AuthContext = createContext();
 
@@ -13,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // Para saber si estamos verificando el token
 
-  // 3. useEffect para cargar el usuario (sin cambios)
+  // 3. useEffect para cargar el usuario 
   useEffect(() => {
     async function loadUserFromToken() {
       const token = localStorage.getItem('token');
@@ -32,35 +30,35 @@ export const AuthProvider = ({ children }) => {
     loadUserFromToken();
   }, []);
 
-  // 4. Función de Login (sin cambios)
+  // 4. Función de Login 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', data.token);
     setUser(data.user);
   };
 
-  // 5. Función de Registro (sin cambios)
+  // 5. Función de Registro 
   const register = async (name, email, password) => {
     const { data } = await api.post('/auth/register', { name, email, password });
     localStorage.setItem('token', data.token);
     setUser(data.user);
   };
 
-  // 6. Función de Logout (sin cambios)
+  // 6. Función de Logout 
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
 
-  // --- 7. NUEVA FUNCIÓN ---
-  // Para actualizar el estado del usuario desde otras páginas (ej. Perfil)
+  // --- 7. 
+  // Para actualizar el estado del usuario desde otras páginas 
   const updateUserContext = (newUserData) => {
     setUser(prevUser => ({
       ...prevUser,
       ...newUserData
     }));
   };
-  // --- FIN DE NUEVA FUNCIÓN ---
+
 
   // 8. Exponemos los valores y funciones a toda la app
   return (
@@ -70,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// 9. Hook personalizado (sin cambios)
+// 9. Hook personalizado
 export const useAuth = () => {
   return useContext(AuthContext);
 };

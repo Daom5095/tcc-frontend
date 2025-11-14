@@ -1,12 +1,8 @@
 /*
  * Página de Detalle de Proceso (ProcessDetailPage.js)
- * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
- * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect, useCallback } from 'react';
-// --- ¡INICIO DE CAMBIO! ---
-import { useParams } from 'react-router-dom'; // <-- 'Link' eliminado
-// --- ¡FIN DE CAMBIO! ---
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../services/api';
@@ -27,7 +23,7 @@ const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
-// (El componente StatusBadge no cambia)
+
 const StatusBadge = ({ status }) => {
   let color;
   switch (status) {
@@ -63,7 +59,7 @@ function ProcessDetailPage() {
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
-  // (El resto del código no cambia...)
+
   const fetchProcessDetails = useCallback(async () => {
     try {
       setLoading(true);

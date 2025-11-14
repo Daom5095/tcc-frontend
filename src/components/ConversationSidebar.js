@@ -1,6 +1,5 @@
 /*
  * Componente ConversationSidebar.js
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN! ---
  *
  * 1. Muestra la lista de conversaciones (públicas y privadas).
  * 2. Muestra un <Modal> de AntD para iniciar un nuevo chat privado.
@@ -9,7 +8,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import api from '../services/api';
-// Importamos componentes de AntD
 import { Modal, Button, List, Avatar, Spin, Typography } from 'antd';
 import { PlusOutlined, UserOutlined } from '@ant-design/icons';
 
@@ -22,7 +20,7 @@ function ConversationSidebar() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
-  // Ya no necesitamos dialogRef
+
 
   // Cargar las conversaciones y la lista de usuarios
   useEffect(() => {
@@ -53,8 +51,8 @@ function ConversationSidebar() {
   const handleStartChat = async (receiverId) => {
     try {
       const { data } = await api.post('/api/conversations', { receiverId });
-      setShowModal(false); // Cierro el modal
-      navigate(`/chat/${data._id}`); // Navego a la página de ese chat
+      setShowModal(false);
+      navigate(`/chat/${data._id}`);
     } catch (err) {
       console.error("Error al iniciar chat", err);
     }
@@ -83,7 +81,6 @@ function ConversationSidebar() {
       {loading && <Text type="secondary">Cargando...</Text>}
       
       <div className="conversation-list">
-        {/* Esta lista mantiene los estilos de index.css que ya tenías */}
         {conversations.map(convo => (
           <Link 
             key={convo._id} 
@@ -95,12 +92,12 @@ function ConversationSidebar() {
         ))}
       </div>
 
-      {/* --- Modal de AntD para Nuevo Chat --- */}
+
       <Modal
         title="Iniciar un nuevo chat"
         open={showModal}
         onCancel={() => setShowModal(false)}
-        footer={null} // No necesitamos botones de OK/Cancelar
+        footer={null} 
       >
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -108,7 +105,7 @@ function ConversationSidebar() {
           </div>
         ) : (
           <List
-            className="contact-list-antd" // Puedes usar esto para estilos si lo necesitas
+            className="contact-list-antd" 
             itemLayout="horizontal"
             dataSource={users}
             locale={{ emptyText: 'No se e ncontraron otros usuarios.' }}

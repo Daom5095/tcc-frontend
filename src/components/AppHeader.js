@@ -1,12 +1,9 @@
 /*
  * Componente Reutilizable de Cabecera (AppHeader.js)
- * Creado para (FASE 2 - PASO 3)
- * --- ¡MODIFICADO CON CLASES RESPONSIVE (MEJORA)! ---
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-// --- MODIFICADO: 'Menu' eliminado de la importación ---
 import { Layout, Button, Space, Typography, Dropdown, Avatar, Badge } from 'antd'; 
 import { UserOutlined, BellOutlined, LogoutOutlined, ProfileOutlined, SettingOutlined } from '@ant-design/icons';
 import { useSocket } from '../context/SocketContext'; 
@@ -86,7 +83,6 @@ function AppHeader({ title, backLink }) {
         <Dropdown menu={{ items: menuItems }} placement="bottomRight">
           <Space style={{ cursor: 'pointer' }}>
             <Avatar size="small" style={{ backgroundColor: '#007bff' }} icon={<UserOutlined />} />
-            {/* --- ¡CLASE AÑADIDA! --- */}
             <Text className="header-user-text" style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
               Hola, {user?.name}
             </Text>

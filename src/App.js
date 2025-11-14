@@ -1,6 +1,6 @@
 /*
  * Componente Principal de Rutas (App.js)
- * --- ¡MODIFICADO CON RUTA DE ADMIN (FASE 3 - PASO 9)! ---
+ * Aquí defino todas las rutas de la aplicación
  */
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
@@ -15,10 +15,8 @@ import ChatGeneralPage from './pages/ChatGeneralPage';
 import PrivateChatPage from './pages/PrivateChatPage';
 import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
-
-// --- NUEVAS IMPORTACIONES ---
-import AdminRoute from './components/AdminRoute'; // Importamos la ruta de Admin
-import AdminUsersPage from './pages/AdminUsersPage'; // Importamos la nueva página de admin
+import AdminRoute from './components/AdminRoute'; 
+import AdminUsersPage from './pages/AdminUsersPage'; 
 
 function App() {
   return (

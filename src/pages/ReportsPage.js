@@ -1,10 +1,7 @@
 /*
  * Página de Reportes (ReportsPage.js)
- * --- ¡MODIFICADO PARA USAR AppHeader REUTILIZABLE (BUG FIX)! ---
- * --- ¡CORREGIDAS IMPORTACIONES NO USADAS (BUG FIX)! ---
  */
 import React, { useState, useEffect } from 'react';
-// import { Link } from 'react-router-dom'; // <-- CAMBIO: Eliminado
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -12,7 +9,6 @@ import AppHeader from '../components/AppHeader';
 import { 
   Layout, Typography, Card, Tag, Spin, 
   Alert, Empty, Row, Col, List, Divider 
-  // Button, Space, <-- CAMBIO: Eliminados
 } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
 
@@ -25,7 +21,6 @@ function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // (El resto del código no cambia...)
   useEffect(() => {
     async function fetchReport() {
       if (user?.role === 'revisor') {

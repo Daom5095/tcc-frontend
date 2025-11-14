@@ -1,6 +1,5 @@
 /*
  * Componente de Ruta Protegida para Administradores (AdminRoute.js)
- * Creado para (FASE 3 - PASO 9)
  *
  * Este componente es un guardián DOBLE:
  * 1. Verifica que el usuario esté logueado (como ProtectedRoute).
@@ -9,7 +8,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
-import { Spin, Layout } from 'antd'; // Usamos Spin para el estado de carga
+import { Spin, Layout } from 'antd'; 
 
 function AdminRoute() {
   const { user, loading } = useAuth();

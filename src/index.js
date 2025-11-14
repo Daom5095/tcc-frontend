@@ -11,8 +11,8 @@ import './index.css';
 import 'antd/dist/reset.css';
 import App from './App'; // Mi componente principal de rutas
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext'; // Mi contexto de sesión
-import { SocketProvider } from './context/SocketContext'; // Mi contexto de sockets
+import { AuthProvider } from './context/AuthContext'; 
+import { SocketProvider } from './context/SocketContext'; 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

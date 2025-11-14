@@ -5,9 +5,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-// Importamos los componentes de AntD que usaremos
 import { Form, Input, Button, Card, Typography, Alert, Space } from 'antd';
-// Importamos los íconos
 import { MailOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -20,7 +18,7 @@ function LoginPage() {
 
   // AntD maneja el estado del formulario internamente
   const onFinish = async (values) => {
-    const { email, password } = values; // 'values' viene de AntD
+    const { email, password } = values; 
     setError('');
     setIsLoading(true);
     try {
@@ -44,7 +42,6 @@ function LoginPage() {
           <SafetyCertificateOutlined style={{ fontSize: '48px', color: 'var(--color-primario)' }} />
         </div>
         
-        {/* --- ¡NOMBRE ACTUALIZADO! --- */}
         <Title level={2} style={{ textAlign: 'center', marginTop: 0 }}>
           Iniciar Sesión 
         </Title>

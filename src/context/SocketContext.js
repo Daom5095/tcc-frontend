@@ -1,12 +1,10 @@
 /*
  * Contexto de Sockets (SocketContext.js)
- * --- ¡MODIFICADO PARA NOTIFICACIONES PERSISTENTES (FASE 2 - PASO 1)! ---
- * --- ¡MODIFICADO CON DELETE (BUG FIX)! ---
  */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { useAuth } from './AuthContext'; // Importamos el contexto de Auth
-import api from '../services/api'; // <-- NUEVO: Importamos API para fetching
+import { useAuth } from './AuthContext'; 
+import api from '../services/api'; 
 
 const SocketContext = createContext();
 
@@ -16,10 +14,10 @@ export const useSocket = () => {
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const [notifications, setNotifications] = useState([]); // Sigue siendo la fuente de verdad
-  const { user } = useAuth(); // Obtenemos el usuario logueado desde AuthContext
+  const [notifications, setNotifications] = useState([]); 
+  const { user } = useAuth(); 
 
-  // --- NUEVO: Función para marcar todas como leídas ---
+  //Función para marcar todas como leídas ---
   const markAllAsRead = useCallback(async () => {
     try {
       // 1. Llama a la API del backend
@@ -32,9 +30,9 @@ export const SocketProvider = ({ children }) => {
     } catch (err) {
       console.error("Error al marcar notificaciones como leídas:", err);
     }
-  }, []); // Depende de 'api' (que es constante)
+  }, []); 
 
-  // --- ¡INICIO DE CÓDIGO NUEVO! ---
+
   // Función para eliminar una sola notificación
   const deleteNotification = useCallback(async (notificationId) => {
     try {
@@ -49,7 +47,7 @@ export const SocketProvider = ({ children }) => {
       console.error("Error al eliminar notificación:", err);
     }
   }, []);
-  // --- ¡FIN DE CÓDIGO NUEVO! ---
+
 
 
   useEffect(() => {
@@ -67,7 +65,7 @@ export const SocketProvider = ({ children }) => {
       setSocket(newSocket);
       console.log('SocketContext: Conectando...');
 
-      // --- NUEVO: Cargar notificaciones históricas ---
+   
       const fetchNotifications = async () => {
         try {
           const { data } = await api.get('/api/notifications');
@@ -77,9 +75,9 @@ export const SocketProvider = ({ children }) => {
         }
       };
       fetchNotifications();
-      // --- Fin de carga histórica ---
+      
 
-      // --- LISTENERS DE NOTIFICACIONES (Ahora añaden a la lista) ---
+      // --- LISTENERS DE NOTIFICACIONES ---
       // Esta función genérica añade cualquier notificación nueva al inicio de la lista
       const handleNewNotification = (notification) => {
         console.log('¡Notificación recibida!', notification);
@@ -116,7 +114,7 @@ export const SocketProvider = ({ children }) => {
       socket, 
       notifications, 
       markAllAsRead, 
-      deleteNotification // <-- ¡CAMBIO! Exponemos la nueva función
+      deleteNotification 
     }}>
       {children}
     </SocketContext.Provider>

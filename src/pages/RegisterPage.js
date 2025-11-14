@@ -1,13 +1,10 @@
 /*
  * Página de Registro (RegisterPage.js)
- * --- ¡VERSIÓN REFACTORIZADA CON ANT DESIGN Y NUEVO NOMBRE! ---
  */
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-// Importamos los componentes de AntD que usaremos
 import { Form, Input, Button, Card, Typography, Alert, Space } from 'antd';
-// Importamos los íconos
 import { MailOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -20,7 +17,6 @@ function RegisterPage() {
 
   // El formulario de AntD nos da los valores cuando la validación es exitosa
   const onFinish = async (values) => {
-    // Ya no necesitamos la validación de 'password.length < 6',
     // AntD la maneja con 'rules'.
     const { name, email, password } = values;
     setError('');
@@ -38,18 +34,17 @@ function RegisterPage() {
   };
 
   return (
-    // Reutilizamos la misma clase de fondo que el Login
+   
     <Space direction="vertical" align="center" className="login-page-background">
-      
-      {/* Reutilizamos la misma clase de tarjeta animada */}
+
       <Card className="login-card" style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
         
-        {/* Ícono alusivo al registro */}
+
         <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
           <UserOutlined style={{ fontSize: '48px', color: 'var(--color-primario)' }} />
         </div>
         
-        {/* --- ¡NOMBRE ACTUALIZADO! --- */}
+    
         <Title level={2} style={{ textAlign: 'center', marginTop: 0 }}>
           Crear Cuenta 
         </Title>
@@ -92,7 +87,7 @@ function RegisterPage() {
               { required: true, message: '¡Por favor ingresa tu contraseña!' },
               { min: 6, message: 'La contraseña debe tener al menos 6 caracteres.' }
             ]}
-            hasFeedback // Añade un ícono de tick/cruz
+            hasFeedback
           >
             <Input.Password 
               prefix={<LockOutlined />} 
@@ -101,10 +96,10 @@ function RegisterPage() {
             />
           </Form.Item>
 
-          {/* --- ¡MEJORA DE UX! --- */}
+  
           <Form.Item
             name="confirm"
-            dependencies={['password']} // Depende del campo 'password'
+            dependencies={['password']} 
             hasFeedback
             rules={[
               { required: true, message: '¡Por favor confirma tu contraseña!' },
@@ -126,7 +121,7 @@ function RegisterPage() {
             />
           </Form.Item>
 
-          {/* Mostramos el error en un 'Alert' de AntD */}
+        
           {error && (
             <Form.Item>
               <Alert message={error} type="error" showIcon />
